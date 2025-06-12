@@ -1,8 +1,6 @@
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime
-
-db = SQLAlchemy()
+from extension import db
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -20,6 +18,16 @@ class User(UserMixin, db.Model):
     last_name = db.Column(db.String(50), nullable=False)
     phone_number = db.Column(db.String(20), nullable=True) # Made nullable as it's optional
     county_id = db.Column(db.Integer, db.ForeignKey('county.id'), nullable=True) # Assuming county is optional or can be added later
+
+    # New fields
+    language = db.Column(db.String(5), default='en')  # 'en' or 'sw'
+    notification_preferences = db.Column(db.JSON, default=lambda: {
+        'sms': True,
+        'email': True,
+        'payment_confirmation': True,
+        'rent_due_reminder': True,
+        'overdue_payment_notice': True
+    })
 
 class Role(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
@@ -47,6 +55,12 @@ class Property(db.Model):
     landlord = db.relationship('User', backref=db.backref('properties', lazy=True))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    county = db.Column(db.String(100), nullable=False)
+    amenities = db.Column(db.JSON, default=list)
+    utility_bill_types = db.Column(db.JSON, default=list)  # e.g., ['water', 'electricity', 'garbage']
+    unit_numbers = db.Column(db.JSON, default=list)  # List of unit numbers/identifiers
+    deposit_amount = db.Column(db.Float, nullable=True)
+    deposit_policy = db.Column(db.String(255), nullable=True)
 
 class Tenant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -84,18 +98,29 @@ class Payment(db.Model):
     account_number = db.Column(db.String(50), nullable=True) # Account number used by tenant
     fees = db.Column(db.Float, default=0.0) # Transaction fees
     description = db.Column(db.String(255), nullable=True)
+    is_offline = db.Column(db.Boolean, default=False)
+    sync_status = db.Column(db.String(20), default='synced')  # 'synced', 'pending_sync', 'sync_failed'
+    offline_reference = db.Column(db.String(100), nullable=True)  # Manual reference number for offline payments
+    receipt_number = db.Column(db.String(100), unique=True, nullable=True)  # System-generated receipt number
+    payment_evidence = db.Column(db.String(255), nullable=True)  # Path to uploaded receipt/evidence
+    payment_type = db.Column(db.String(20), default='rent')  # 'rent', 'deposit', 'utility', etc.
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class AuditLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    user = db.relationship('User', backref=db.backref('audit_logs'))
-    action = db.Column(db.String(100), nullable=False) # e.g., 'LOGIN', 'LOGOUT', 'PROPERTY_CREATE', 'PAYMENT_UPDATE'
-    table_name = db.Column(db.String(100), nullable=True) # e.g., 'property', 'tenant', 'payment'
-    record_id = db.Column(db.Integer, nullable=True) # ID of the record affected
-    old_value = db.Column(db.Text, nullable=True) # JSON representation of old data
-    new_value = db.Column(db.Text, nullable=True) # JSON representation of new data
+    action = db.Column(db.String(100), nullable=False)
+    table_name = db.Column(db.String(100), nullable=True)
+    record_id = db.Column(db.Integer, nullable=True)
+    old_value = db.Column(db.JSON, nullable=True)
+    new_value = db.Column(db.JSON, nullable=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    ip_address = db.Column(db.String(45), nullable=True) # IPv4 or IPv6
+    ip_address = db.Column(db.String(45), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
     details = db.Column(db.Text, nullable=True)
+
+    user = db.relationship('User', backref=db.backref('audit_logs', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<AuditLog {self.action} by {self.user_id} at {self.timestamp}>'
