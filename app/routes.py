@@ -1,200 +1,294 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
+# app/routes.py
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+# app/routes.py
+
+from flask import Blueprint, render_template, request, flash, redirect, url_for,current_app
 from flask_login import login_required, current_user
 from flask_security import roles_required # For role-based access control
 from .models import db, User, Property, Tenant, Payment, County, AuditLog
 # Assuming forms are defined in app/forms.py
-from forms import ExtendRegisterForm, ExtendedLoginForm, UserProfileForm
+from forms import ExtendRegisterForm, ExtendedLoginForm, UserProfileForm, PropertyForm, TenantForm, RecordPaymentForm
 from datetime import datetime, timedelta
-from sqlalchemy import func
-import json # For serializing/deserializing audit log values
+from sqlalchemy import func, and_
+import json
+from flask_babel import lazy_gettext as _l
 
+# Define your main Blueprint
 main = Blueprint('main', __name__)
 
+# --- Dashboard Route ---
 @main.route('/')
-def index():
-    return render_template('index.html')
-
 @main.route('/dashboard')
-@login_required
+@login_required # User must be logged in to access the dashboard
+@roles_required('landlord') # Only landlords can access the main dashboard
 def dashboard():
-    # Example metrics for dashboard
-    total_properties = 0
-    total_tenants = 0
-    total_collected_this_month = 0.0
-    overdue_payments_count = 0
-    recent_transactions = [] # Placeholder for recent payments
+    """
+    Renders the main dashboard with key metrics and recent payments.
+    """
+    # Initialize metrics with default values
+    metrics = {
+        'overdue_payments': 0,
+        'total_collections': 0.00,
+        'vacancy_rate': 0.00,
+        'recent_transactions': 0 # This might need a specific count
+    }
+    recent_payments = []
 
-    if current_user.has_role('landlord'): # Use has_role for Flask-Security roles
-        properties = Property.query.filter_by(landlord_id=current_user.id).all()
-        total_properties = len(properties)
+    try:
+        # Fetch properties owned by the current landlord
+        landlord_properties = Property.query.filter_by(landlord_id=current_user.id).all()
+        landlord_property_ids = [p.id for p in landlord_properties]
 
-        # Get all tenants for these properties
-        property_ids = [p.id for p in properties]
-        tenants = Tenant.query.filter(Tenant.property_id.in_(property_ids)).all()
-        total_tenants = len(tenants)
+        if landlord_property_ids:
+            # 1. Overdue Payments: Active tenants with confirmed rent due, but no confirmed payment for current month
+            # This logic can be complex; simplifying for dashboard display
+            # A more robust check would involve checking 'pending_due' payments from tasks.py
+            # and comparing with confirmed payments.
+            today = datetime.utcnow().date()
+            current_month_start = today.replace(day=1)
+            next_month_start = (current_month_start + timedelta(days=32)).replace(day=1)
 
-        # Calculate metrics for the current month
-        today = datetime.now()
-        start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        end_of_month = (start_of_month + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+            overdue_tenants = Tenant.query.filter(
+                Tenant.property_id.in_(landlord_property_ids),
+                Tenant.status == 'active',
+                # Check for tenants whose due date + grace period has passed
+                # This requires more complex SQL or iterated Python logic to be precise
+                # Simplified: count payments that are 'pending_due' and past their date
+                # Or count active tenants who haven't paid for the current month
+            ).all()
 
-        # Total collected this month
-        collected_payments = Payment.query.join(Tenant).filter(
-            Tenant.property_id.in_(property_ids),
-            Payment.payment_date >= start_of_month,
-            Payment.payment_date <= end_of_month,
-            Payment.status == 'confirmed' # Only count confirmed payments
-        ).with_entities(func.sum(Payment.amount)).scalar()
-        total_collected_this_month = collected_payments if collected_payments is not None else 0.0
+            overdue_count = 0
+            for tenant in overdue_tenants:
+                try:
+                    due_date_this_month = today.replace(day=tenant.due_day_of_month)
+                    effective_due_date = due_date_this_month + timedelta(days=tenant.grace_period_days)
+                    
+                    if today > effective_due_date:
+                        # Check if a payment exists for this tenant for this month
+                        payment_this_month = Payment.query.filter(
+                            Payment.tenant_id == tenant.id,
+                            Payment.payment_date.between(current_month_start, next_month_start - timedelta(days=1)),
+                            Payment.status == 'confirmed'
+                        ).first()
+                        
+                        if not payment_this_month:
+                            overdue_count += 1
+                except ValueError: # Handle cases where due_day_of_month is invalid for the current month
+                    continue # Skip this tenant for now or handle specifically
 
-        # Overdue payments count
-        # A payment is overdue if today is past its due date + grace period
-        # This requires a more complex query joining Payments, Tenants, and considering lease dates
-        # For simplicity in this snippet, let's count tenants with rent due before today and not yet confirmed paid
-        overdue_tenants = 0
-        for tenant in tenants:
-            rent_due_date_this_month = today.replace(day=tenant.due_day_of_month)
-            if today > (rent_due_date_this_month + timedelta(days=tenant.grace_period_days)):
-                # Check if a confirmed payment exists for this period
-                # This is a simplified check and would need more robust monthly tracking logic
-                paid_this_period = Payment.query.filter(
-                    Payment.tenant_id == tenant.id,
-                    Payment.payment_date >= rent_due_date_this_month,
-                    Payment.payment_date <= today,
-                    Payment.status == 'confirmed'
-                ).first()
-                if not paid_this_period:
-                    overdue_tenants += 1
-        overdue_payments_count = overdue_tenants # Simplified to number of overdue tenants
+            metrics['overdue_payments'] = overdue_count
 
-        # Recent transactions (last 5 confirmed payments for landlord's properties)
-        recent_transactions = Payment.query.join(Tenant).filter(
-            Tenant.property_id.in_(property_ids),
-            Payment.status == 'confirmed'
-        ).order_by(Payment.payment_date.desc()).limit(5).all()
+            # 2. Total Collections (e.g., for the current month or year-to-date)
+            # Let's do current month for simplicity
+            total_collections_query = db.session.query(func.sum(Payment.amount)).filter(
+                Payment.tenant_id.in_([t.id for t in Tenant.query.filter(Tenant.property_id.in_(landlord_property_ids)).all()]),
+                Payment.status == 'confirmed',
+                Payment.payment_date >= current_month_start,
+                Payment.payment_date < next_month_start
+            ).scalar()
+            metrics['total_collections'] = total_collections_query if total_collections_query is not None else 0.00
 
-        return render_template(
-            'dashboard.html',
-            properties=properties,
-            total_properties=total_properties,
-            total_tenants=total_tenants,
-            total_collected_this_month=total_collected_this_month,
-            overdue_payments_count=overdue_payments_count,
-            recent_transactions=recent_transactions
-        )
-    elif current_user.has_role('tenant'):
-        # Tenant dashboard logic
-        tenant = Tenant.query.filter_by(email=current_user.email).first() # Assuming email links user to tenant
-        if tenant:
-            # Show tenant's specific payments, next due date, etc.
-            recent_payments = Payment.query.filter_by(tenant_id=tenant.id).order_by(Payment.payment_date.desc()).limit(5).all()
-            return render_template('dashboard.html', tenant=tenant, recent_payments=recent_payments)
-        flash("You are not linked to a tenant profile yet.", "warning")
-        return redirect(url_for('main.index'))
-    else:
-        # Default for unassigned roles or other cases
-        return redirect(url_for('main.index'))
+            # 3. Vacancy Rate
+            total_units = db.session.query(func.sum(Property.number_of_units)).filter(
+                Property.id.in_(landlord_property_ids)
+            ).scalar() or 0
 
-# --- Property Management Routes ---
+            occupied_units = db.session.query(func.count(Tenant.id)).filter(
+                Tenant.property_id.in_(landlord_property_ids),
+                Tenant.status == 'active'
+            ).scalar() or 0
+
+            if total_units > 0:
+                metrics['vacancy_rate'] = round(((total_units - occupied_units) / total_units) * 100, 2)
+            else:
+                metrics['vacancy_rate'] = 0.00 # Or 100 if no units
+
+            # 4. Recent Transactions (count of confirmed payments in last 7 days)
+            seven_days_ago = datetime.utcnow() - timedelta(days=7)
+            metrics['recent_transactions'] = Payment.query.filter(
+                Payment.tenant_id.in_([t.id for t in Tenant.query.filter(Tenant.property_id.in_(landlord_property_ids)).all()]),
+                Payment.status == 'confirmed',
+                Payment.payment_date >= seven_days_ago.date()
+            ).count()
+
+            # Recent Payments Table Data (last 5 confirmed payments)
+            recent_payments_query = Payment.query.filter(
+                Payment.tenant_id.in_([t.id for t in Tenant.query.filter(Tenant.property_id.in_(landlord_property_ids)).all()]),
+                Payment.status == 'confirmed'
+            ).order_by(Payment.payment_date.desc()).limit(5).all()
+
+            for payment in recent_payments_query:
+                tenant = payment.tenant
+                property_name = tenant.property.name if tenant and tenant.property else _l('N/A')
+                recent_payments.append({
+                    'tenant_name': f"{tenant.first_name} {tenant.last_name}" if tenant else _l('Unknown Tenant'),
+                    'property_name': property_name,
+                    'amount': payment.amount,
+                    'payment_date': payment.payment_date,
+                    'status': payment.status
+                })
+
+    except Exception as e:
+        current_app.logger.error(f"Error fetching dashboard metrics for user {current_user.id}: {e}")
+        flash(_l('Error loading dashboard data.'), 'danger')
+        # Metrics will remain default 0 in case of error
+
+    return render_template('dashboard.html', metrics=metrics, recent_payments=recent_payments)
+
+# --- Properties Routes ---
 @main.route('/properties')
 @login_required
-@roles_required('landlord') # Only landlords can view properties
-def property_list():
+@roles_required('landlord')
+def properties_list():
     properties = Property.query.filter_by(landlord_id=current_user.id).all()
     return render_template('properties/list.html', properties=properties)
 
-@main.route('/property/add', methods=['GET', 'POST'])
+@main.route('/properties/add', methods=['GET', 'POST'])
 @login_required
 @roles_required('landlord')
-def add_property():
-    # Form for adding property (Flask-WTF form needed)
-    return render_template('properties/add_edit.html', title='Add New Property')
+def property_add():
+    form = PropertyForm()
+    if form.validate_on_submit():
+        property = Property(
+            name=form.name.data,
+            address=form.address.data,
+            property_type=form.property_type.data,
+            number_of_units=form.number_of_units.data,
+            landlord_id=current_user.id
+        )
+        db.session.add(property)
+        db.session.commit()
+        flash(_l('Property added successfully.'), 'success')
+        return redirect(url_for('main.properties_list'))
+    return render_template('properties/add_edit.html', form=form, edit=False)
 
-# --- Tenant Management Routes ---
+@main.route('/properties/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+@roles_required('landlord')
+def property_edit(id):
+    property = Property.query.get_or_404(id)
+    if property.landlord_id != current_user.id:
+        flash(_l('Access denied.'), 'danger')
+        return redirect(url_for('main.properties_list'))
+    form = PropertyForm(obj=property)
+    if form.validate_on_submit():
+        property.name = form.name.data
+        property.address = form.address.data
+        property.property_type = form.property_type.data
+        property.number_of_units = form.number_of_units.data
+        db.session.commit()
+        flash(_l('Property updated successfully.'), 'success')
+        return redirect(url_for('main.properties_list'))
+    return render_template('properties/add_edit.html', form=form, edit=True)
+
+# --- Tenants Routes ---
 @main.route('/tenants')
 @login_required
 @roles_required('landlord')
-def tenant_list():
-    # Filter tenants by landlord's properties
-    property_ids = [p.id for p in Property.query.filter_by(landlord_id=current_user.id).all()]
+def tenants_list():
+    landlord_properties = Property.query.filter_by(landlord_id=current_user.id).all()
+    property_ids = [p.id for p in landlord_properties]
     tenants = Tenant.query.filter(Tenant.property_id.in_(property_ids)).all()
     return render_template('tenants/list.html', tenants=tenants)
 
-@main.route('/tenant/add', methods=['GET', 'POST'])
+@main.route('/tenants/add', methods=['GET', 'POST'])
 @login_required
 @roles_required('landlord')
-def add_tenant():
-    # Form for adding tenant (Flask-WTF form needed)
-    return render_template('tenants/add_edit.html', title='Add New Tenant')
+def tenant_add():
+    form = TenantForm()
+    form.property_id.choices = [(p.id, p.name) for p in Property.query.filter_by(landlord_id=current_user.id).all()]
+    if form.validate_on_submit():
+        tenant = Tenant(
+            first_name=form.first_name.data,
+            last_name=form.last_name.data,
+            email=form.email.data,
+            phone_number=form.phone_number.data,
+            property_id=form.property_id.data,
+            rent_amount=form.rent_amount.data,
+            due_day_of_month=form.due_day_of_month.data,
+            grace_period_days=form.grace_period_days.data,
+            lease_start_date=form.lease_start_date.data,
+            lease_end_date=form.lease_end_date.data
+        )
+        db.session.add(tenant)
+        db.session.commit()
+        flash(_l('Tenant added successfully.'), 'success')
+        return redirect(url_for('main.tenants_list'))
+    return render_template('tenants/add_edit.html', form=form, edit=False)
 
-# --- Payment Recording Route ---
+@main.route('/tenants/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+@roles_required('landlord')
+def tenant_edit(id):
+    tenant = Tenant.query.get_or_404(id)
+    if tenant.property.landlord_id != current_user.id:
+        flash(_l('Access denied.'), 'danger')
+        return redirect(url_for('main.tenants_list'))
+    form = TenantForm(obj=tenant)
+    form.property_id.choices = [(p.id, p.name) for p in Property.query.filter_by(landlord_id=current_user.id).all()]
+    if form.validate_on_submit():
+        form.populate_obj(tenant)
+        db.session.commit()
+        flash(_l('Tenant updated successfully.'), 'success')
+        return redirect(url_for('main.tenants_list'))
+    return render_template('tenants/add_edit.html', form=form, edit=True)
+
+# --- Payments Routes ---
 @main.route('/payments/record', methods=['GET', 'POST'])
 @login_required
 @roles_required('landlord')
 def record_payment():
-    # Form for recording payment (Flask-WTF form needed)
-    # This form might include fields for tenant, amount, date, method, M-Pesa ID if manual
-    return render_template('payments/record_payment.html', title='Record Payment')
+    form = RecordPaymentForm()
+    landlord_properties = Property.query.filter_by(landlord_id=current_user.id).all()
+    property_ids = [p.id for p in landlord_properties]
+    form.tenant_id.choices = [(t.id, f"{t.first_name} {t.last_name}") 
+                             for t in Tenant.query.filter(Tenant.property_id.in_(property_ids)).all()]
+    if form.validate_on_submit():
+        payment = Payment(
+            amount=form.amount.data,
+            tenant_id=form.tenant_id.data,
+            payment_method=form.payment_method.data,
+            transaction_id=form.transaction_id.data,
+            payment_date=form.payment_date.data or datetime.utcnow(),
+            status='confirmed'
+        )
+        db.session.add(payment)
+        db.session.commit()
+        flash(_l('Payment recorded successfully.'), 'success')
+        return redirect(url_for('main.payments_history'))
+    return render_template('payments/record_payment.html', form=form)
 
-# --- M-Pesa Callback Route ---
-# This route would be publicly accessible for M-Pesa to send confirmation data
-@main.route('/mpesa/callback', methods=['POST'])
-def mpesa_callback():
-    # This is a critical endpoint for C2B payments
-    # It receives transaction data from M-Pesa upon successful payment
-    data = request.get_json()
-    if not data:
-        return jsonify({"message": "Invalid JSON"}), 400
-
-    # Log the incoming callback for audit/debugging
-    # Process M-Pesa data: validate, extract M-Pesa ID, amount, sender, etc.
-    # Match to pending payments or create new payment record
-    # Update payment status in DB to 'confirmed'
-    # Send confirmation SMS/Email to tenant/landlord
-
-    # Example:
-    # try:
-    #     transaction_id = data['Body']['stkCallback']['CheckoutRequestID'] # Or similar
-    #     amount = data['Body']['stkCallback']['CallbackMetadata']['Item'][0]['Value']
-    #     phone_number = data['Body']['stkCallback']['CallbackMetadata']['Item'][4]['Value'] # Example path
-    #     # Find tenant by phone_number, update payment or create new one
-    #     # ...
-    #     flash("M-Pesa payment confirmed successfully!", "success")
-    #     return jsonify({"ResultCode": 0, "ResultDesc": "Callback received successfully"}), 200
-    # except Exception as e:
-    #     current_app.logger.error(f"Error processing M-Pesa callback: {e} Data: {json.dumps(data)}")
-    #     return jsonify({"ResultCode": 1, "ResultDesc": "Error processing callback"}), 200 # M-Pesa usually expects 200 even on internal errors
-
-    # For now, just acknowledge receipt
-    print(f"M-Pesa Callback Received: {json.dumps(data, indent=2)}")
-    return jsonify({"ResultCode": 0, "ResultDesc": "Callback received successfully"}), 200
-
-# --- Audit Trail View ---
-@main.route('/audit')
+@main.route('/payments/history')
 @login_required
-@roles_required('landlord') # Only landlords can view audit trails
-def audit_trail_view():
-    # Fetch audit logs (e.g., last 100 or filterable)
-    logs = AuditLog.query.order_by(AuditLog.timestamp.desc()).limit(100).all()
+@roles_required('landlord')
+def payments_history():
+    landlord_properties = Property.query.filter_by(landlord_id=current_user.id).all()
+    property_ids = [p.id for p in landlord_properties]
+    tenant_ids = [t.id for t in Tenant.query.filter(Tenant.property_id.in_(property_ids)).all()]
+    payments = Payment.query.filter(Payment.tenant_id.in_(tenant_ids)).order_by(Payment.payment_date.desc()).all()
+    return render_template('payments/history.html', payments=payments)
+
+# --- Reports and Audit Routes ---
+@main.route('/reports')
+@login_required
+@roles_required('landlord')
+def reports():
+    return render_template('reports/index.html')
+
+@main.route('/audit-trail')
+@login_required
+@roles_required('landlord')
+def audit_trail():
+    logs = AuditLog.query.filter_by(user_id=current_user.id).order_by(AuditLog.timestamp.desc()).all()
     return render_template('audit_trail.html', logs=logs)
 
-# --- Reporting Route ---
-@main.route('/reports', methods=['GET'])
-@login_required
-@roles_required('landlord')
-def generate_reports():
-    # This view will display filters and trigger report generation
-    properties = Property.query.filter_by(landlord_id=current_user.id).all()
-    # Logic to filter and display data based on query parameters (date_range, property_id, status)
-    return render_template('reports/index.html', properties=properties)
+# --- Set Language Route ---
+@main.route('/set_language', methods=['POST'])
+def set_language():
+    lang = request.form.get('lang')
+    if lang:
+        session['lang'] = lang
+        flash(_l('Language changed.'), 'success')
+    return redirect(request.referrer or url_for('main.dashboard'))
 
-@main.route('/reports/export/<format>', methods=['GET'])
-@login_required
-@roles_required('landlord')
-def export_report(format):
-    # Logic to fetch data based on filters, generate report in specified format (CSV, Excel, PDF)
-    # Using pandas for data processing before export
-    # Using ReportLab for PDF generation
-    # Return file as a response
-    flash(f"Generating {format.upper()} report...", "info")
-    return redirect(url_for('main.generate_reports'))
+# Add other route definitions here as needed
