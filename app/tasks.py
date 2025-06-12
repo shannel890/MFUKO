@@ -8,11 +8,15 @@ import json
 from flask_babel import lazy_gettext as _l
 
 # Import your models and database instance
-from extension import db, mail # Assuming 'db' and 'mail' are initialized in app/__init__.py
-from app.models import Tenant, Property, Payment, User, AuditLog # Import all necessary models
-from api import mpesa_api # Assuming you'll have M-Pesa API client logic here
-from utils import send_email, send_sms # Assuming these utility functions exist
+from . import db, mail
+from .models import Tenant, Property, Payment, User, AuditLog
 
+# THE FIX IS HERE: Use a relative import for your local 'api' module
+from .api import mpesa_api # Corrected import
+
+from .utils import send_email, send_sms # Assuming these utility functions exist
+
+# ... rest of your tasks.py code ...
 
 def refresh_mpesa_token():
     """
@@ -63,57 +67,158 @@ def refresh_mpesa_token():
 
 def check_and_generate_rent_invoices():
     """
-    Periodically checks active tenants and generates 'pending_due' payment records
-    for the upcoming month's rent. This acts as an internal 'invoice'.
-    Runs, for example, on the 25th of each month.
+    Generate rent invoices for all active tenants on 1st of the month.
     """
     app = current_app._get_current_object()
     with app.app_context():
-        app.logger.info("Running scheduled job: Check and generate rent invoices.")
-        today = datetime.utcnow().date()
-        # Consider generating for the NEXT month, e.g., on the 25th of current month
-        # to prepare for payments due on 1st of next month.
-        next_month_date = (today.replace(day=1) + timedelta(days=32)).replace(day=1)
-
-        active_tenants = Tenant.query.filter_by(status='active').all()
-
-        for tenant in active_tenants:
-            # Determine the expected due date for the upcoming month
-            try:
-                expected_due_date = next_month_date.replace(day=tenant.due_day_of_month)
-            except ValueError: # Handle cases where day might be 30/31 in shorter months
-                expected_due_date = next_month_date.replace(day=28) # Default to 28th if invalid day
-
-            # Check if a payment for this period (month and year) already exists
-            # This is a simplified check and might need to be more robust for partial payments etc.
-            existing_payment_this_period = Payment.query.filter(
-                Payment.tenant_id == tenant.id,
-                Payment.payment_date.between(expected_due_date.replace(day=1), (expected_due_date.replace(day=1) + timedelta(days=32)).replace(day=1) - timedelta(days=1)),
-                Payment.status.in_(['confirmed', 'partially_paid']) # Consider already confirmed or partially paid
-            ).first()
-
-            if not existing_payment_this_period:
-                # Create a pending payment record for this month's expected rent
-                new_payment = Payment(
-                    amount=tenant.rent_amount,
-                    tenant_id=tenant.id,
-                    payment_date=expected_due_date,
-                    payment_method='Scheduled', # Indicate it's an internal scheduled entry
-                    status='pending_due', # Custom status for expected payments
-                    description=f"Monthly rent due for {expected_due_date.strftime('%B %Y')}"
-                )
-                db.session.add(new_payment)
-                app.logger.info(f"Generated pending rent record for tenant {tenant.id} for {expected_due_date.strftime('%B %Y')}.")
-            else:
-                app.logger.info(f"Skipping rent record generation for tenant {tenant.id} for {expected_due_date.strftime('%B %Y')}: Payment already exists or confirmed.")
-        
         try:
+            today = datetime.utcnow().date()
+            tenants = Tenant.query.filter_by(status='active').all()
+            
+            for tenant in tenants:
+                # Check if a rent payment record already exists for this month
+                exists = Payment.query.filter(
+                    and_(
+                        Payment.tenant_id == tenant.id,
+                        Payment.payment_type == 'rent',
+                        Payment.status.in_(['pending_confirmation', 'confirmed']),
+                        Payment.payment_date.between(
+                            datetime(today.year, today.month, 1),
+                            datetime(today.year, today.month + 1, 1) if today.month < 12 
+                            else datetime(today.year + 1, 1, 1)
+                        )
+                    )
+                ).first()
+                
+                if not exists:
+                    new_payment = Payment(
+                        tenant_id=tenant.id,
+                        amount=tenant.rent_amount,
+                        payment_type='rent',
+                        status='pending_confirmation',
+                        payment_date=datetime(today.year, today.month, tenant.due_day_of_month)
+                    )
+                    db.session.add(new_payment)
+                    
+                    # Send notification if enabled
+                    if tenant.email and tenant.user.notification_preferences.get('email', True):
+                        send_email(
+                            subject=_l("Rent Due for %(month)s", month=today.strftime('%B %Y')),
+                            recipient=tenant.email,
+                            template='email/rent_due',
+                            amount=tenant.rent_amount,
+                            due_date=new_payment.payment_date.strftime('%d/%m/%Y'),
+                            tenant=tenant
+                        )
+                    
+                    if tenant.phone_number and tenant.user.notification_preferences.get('sms', True):
+                        send_sms(
+                            to=tenant.phone_number,
+                            message=_l("Rent of KSh %(amount).2f is due on %(date)s. Pay to Paybill %(paybill)s, Account: %(property)s-%(tenant)s",
+                                amount=tenant.rent_amount,
+                                date=new_payment.payment_date.strftime('%d/%m/%Y'),
+                                paybill=app.config['MPESA_PAYBILL'],
+                                property=tenant.property.name,
+                                tenant=tenant.id)
+                        )
+            
             db.session.commit()
-            app.logger.info("Successfully generated rent invoices and committed to DB.")
+            app.logger.info("Successfully generated rent invoices.")
         except Exception as e:
             db.session.rollback()
-            app.logger.error(f"Failed to commit rent invoice generation: {e}")
+            app.logger.error(f"Failed to generate rent invoices: {e}")
 
+
+def send_payment_reminders():
+    """Send payment reminders to tenants."""
+    app = current_app._get_current_object()
+    with app.app_context():
+        try:
+            today = datetime.utcnow().date()
+            reminder_days = app.config.get('PAYMENT_REMINDER_DAYS', [5, 3, 1])
+            
+            # Get all pending payments
+            pending_payments = Payment.query.filter(
+                and_(
+                    Payment.status == 'pending_confirmation',
+                    Payment.payment_date >= today,
+                    Payment.payment_date <= today + timedelta(days=max(reminder_days))
+                )
+            ).all()
+            
+            for payment in pending_payments:
+                days_until_due = (payment.payment_date.date() - today).days
+                
+                if days_until_due in reminder_days:
+                    tenant = payment.tenant
+                    
+                    # Send email reminder
+                    if tenant.email and tenant.user.notification_preferences.get('email', True):
+                        send_email(
+                            subject=_l("Rent Payment Reminder - Due in %(days)d days", days=days_until_due),
+                            recipient=tenant.email,
+                            template='email/payment_reminder',
+                            payment=payment,
+                            tenant=tenant,
+                            days_until_due=days_until_due
+                        )
+                    
+                    # Send SMS reminder
+                    if tenant.phone_number and tenant.user.notification_preferences.get('sms', True):
+                        send_sms(
+                            to=tenant.phone_number,
+                            message=_l("Reminder: Rent payment of KSh %(amount).2f is due in %(days)d days. Pay to Paybill %(paybill)s, Account: %(property)s-%(tenant)s",
+                                amount=payment.amount,
+                                days=days_until_due,
+                                paybill=app.config['MPESA_PAYBILL'],
+                                property=tenant.property.name,
+                                tenant=tenant.id)
+                        )
+            
+            app.logger.info("Successfully sent payment reminders.")
+        except Exception as e:
+            app.logger.error(f"Failed to send payment reminders: {e}")
+
+def sync_offline_payments():
+    """Sync offline payments when internet connection is available."""
+    app = current_app._get_current_object()
+    with app.app_context():
+        try:
+            offline_payments = Payment.query.filter_by(
+                is_offline=True,
+                sync_status='pending_sync'
+            ).limit(app.config.get('OFFLINE_CACHE_LIMIT', 1000)).all()
+            
+            for payment in offline_payments:
+                try:
+                    # Verify payment with M-Pesa API if it's an M-Pesa payment
+                    if payment.payment_method == 'M-Pesa' and payment.transaction_id:
+                        mpesa_api.verify_transaction(payment.transaction_id)
+                    
+                    payment.sync_status = 'synced'
+                    payment.is_offline = False
+                    db.session.add(payment)
+                    
+                    # Create audit log
+                    audit_log = AuditLog(
+                        user_id=payment.tenant.user_id,
+                        action='PAYMENT_SYNC',
+                        table_name='payment',
+                        record_id=payment.id,
+                        details=f"Payment {payment.id} synced from offline mode"
+                    )
+                    db.session.add(audit_log)
+                    
+                except Exception as sync_error:
+                    app.logger.error(f"Failed to sync payment {payment.id}: {sync_error}")
+                    payment.sync_status = 'sync_failed'
+                    db.session.add(payment)
+            
+            db.session.commit()
+            app.logger.info("Successfully synced offline payments.")
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Failed to sync offline payments: {e}")
 
 def send_upcoming_rent_reminders():
     """
@@ -231,3 +336,7 @@ def send_overdue_reminders():
                 # or log overdue status change
             except Exception as e:
                 app.logger.error(f"Failed to send overdue reminder to tenant {tenant.id}: {e}")
+
+def check_overdue_payments():
+    """Stub for overdue payments check. Implement logic as needed."""
+    pass
