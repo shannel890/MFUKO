@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Real Estate Payment Tracker (REPT)') }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f8fafc 0%, #e0e7ef 100%);
+            min-height: 100vh;
+        }
+        .hero {
+            padding: 4rem 0 2rem 0;
+            background: #fff;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 32px rgba(0,0,0,0.07);
+        }
+        .brand {
+            font-weight: 700;
+            font-size: 2.2rem;
+            color: #0d6efd;
+            letter-spacing: 1px;
+        }
+        .lead {
+            color: #495057;
+        }
+        .lang-switch {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+        }
+        @media (max-width: 576px) {
+            .hero { padding: 2rem 0.5rem; }
+            .brand { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container position-relative">
+        <div class="lang-switch">
+            <form method="post" action="{{ url_for('main.set_language') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <select name="lang" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="en" {% if g.get('lang_code', 'en') == 'en' %}selected{% endif %}>English</option>
+                    <option value="sw" {% if g.get('lang_code', 'en') == 'sw' %}selected{% endif %}>Kiswahili</option>
+                </select>
+            </form>
+        </div>
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-lg-7 col-md-10">
+                <div class="hero text-center p-4">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="REPT Logo" style="height: 64px; margin-bottom: 1rem;">
+                    <div class="brand mb-2">{{ _('Real Estate Payment Tracker') }}</div>
+                    <p class="lead mb-4">{{ _('Effortlessly track rent, automate M-Pesa payments, and manage your properties in Kenya. Simple for everyone, powerful for landlords.') }}</p>
+                    <!-- Change this line -->
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg shadow-sm">{{ _('Go to Dashboard') }}</a>
+                    <div class="mt-4">
+                        <small class="text-muted">{{ _('Available in English & Kiswahili') }}</small>
+                    </div>
+                </div>
+                <footer class="text-center mt-5 mb-3">
+                   <small class="text-muted">&copy; {{ now.now().year }} REPT Kenya</small>
+                </footer>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

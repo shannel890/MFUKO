@@ -1,112 +1,270 @@
 from flask import Flask, request, render_template, g
 from flask_security import SQLAlchemySessionUserDatastore
 from flask_babel import _, lazy_gettext as _l
+from flask_login import current_user
 import os
 import requests
-from datetime import datetime
-from flask_login import current_user
+from datetime import datetime, timedelta
+import logging
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
-from config import Config
-from extension import db, login_manager, security, csrf, mail, babel, scheduler, limiter, migrate
-from forms import ExtendRegisterForm, ExtendedLoginForm # Import your custom forms
+# Configure logging for APScheduler
+logging.basicConfig()
+logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 
-# Initialize extensions
+# Import task functions
+from app.tasks import (
+    sync_offline_payments,
+    refresh_mpesa_token,
+    check_and_generate_rent_invoices,
+    send_payment_reminders,
+    send_upcoming_rent_reminders,
+    send_overdue_reminders,
+    check_overdue_payments
+)
 
-# db = SQLAlchemy()
-# security = Security()
-# mail = Mail()
-# babel = Babel()
-# limiter = Limiter(key_func=get_remote_address)
-# scheduler = BackgroundScheduler()
+# Import configuration and extensions
+from config import config_options
+from extension import db, login_manager, security, csrf, mail, babel, scheduler, limiter, migrate, user_datastore
+from forms import ExtendRegisterForm, ExtendedLoginForm  # Import your custom forms
 
 def create_app(config_name='development'):
-    app = Flask(__name__)
+    """
+    Application factory function to create and configure the Flask app.
+    Args:
+        config_name (str): The name of the configuration to load ('development', 'production', 'testing').
+    """
+    app = Flask(__name__, instance_relative_config=True)  # instance_relative_config for instance folder
+    
+    # Load configuration from the selected config class
+    app.config.from_object(config_options[config_name])
+    
+    # Set Flask-Limiter configuration
+    app.config['RATELIMIT_STORAGE_URL'] = 'memory://'  # Use in-memory storage for development
+    app.config['RATELIMIT_DEFAULT'] = "200 per day"  # Default rate limit
+    app.config['RATELIMIT_HEADERS_ENABLED'] = True
 
-    app.config.from_object(Config)
+    # Flask-Security configuration
+    app.config['SECURITY_BLUEPRINT_NAME'] = 'fs_auth'  # Use a unique blueprint name
+    app.config['SECURITY_URL_PREFIX'] = '/auth'  # Prefix all Flask-Security URLs with /auth
+    app.config['SECURITY_REGISTER_URL'] = '/signup'
+    app.config['SECURITY_LOGIN_URL'] = '/signin'
+    app.config['SECURITY_LOGOUT_URL'] = '/logout'
+    app.config['SECURITY_POST_LOGIN_VIEW'] = '/dashboard'
+    app.config['SECURITY_POST_REGISTER_VIEW'] = '/dashboard'
 
-    # Initialize extensions
+    # Initialize core extensions with the Flask app
     db.init_app(app)
-    login_manager.init_app(app)
+    migrate.init_app(app, db)  # Initialize Flask-Migrate
     csrf.init_app(app)
     mail.init_app(app)
-    babel.init_app(app) # Initialize Babel with the app
+    babel.init_app(app)
 
+    # Initialize Flask-Limiter
+    global limiter
+    limiter = Limiter(
+        app=app,
+        key_func=get_remote_address,
+        default_limits=["200 per day", "50 per hour"]
+    )
+
+    # Configure logging
+    if not app.debug and not app.testing:
+        # Example for basic file logging (adjust as needed for production)
+        if not os.path.exists('logs'):
+            os.makedirs('logs')
+        file_handler = logging.FileHandler('logs/rept.log')
+        file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
+        file_handler.setLevel(logging.INFO)
+        app.logger.addHandler(file_handler)
+        app.logger.setLevel(logging.INFO)
+        app.logger.info('REPT startup')
+
+    # Ensure instance folder exists for configurations/logs
+    try:
+        os.makedirs(app.instance_path)
+    except OSError:
+        pass  # Folder already exists
+
+    # Set up login manager configuration (for Flask-Login, used by Flask-Security)
+    login_manager.login_view = 'security.login'  # Flask-Security-Too's login endpoint
+    login_manager.login_message = _l('Please log in to access this page.')
+    login_manager.login_message_category = 'info'
+    login_manager.init_app(app)
+
+    # User loader for Flask-Login (used by Flask-Security-Too)
+    @login_manager.user_loader
+    def load_user(user_id):
+        from .models import User  # Import User model here to avoid circular imports
+        return User.query.get(int(user_id))
+
+    # Set up Flask-Babel locale selector function
     def get_locale():
-        if current_user.is_authenticated:
+        # 1. Try language from URL argument (e.g., /en/dashboard) - not implemented in routes yet
+        # lang = request.args.get('lang_code')
+        # if lang:
+        #     return lang
+        
+        # 2. Try language from cookie
+        lang = request.cookies.get('lang')
+        if lang in app.config['LANGUAGES']:
+            return lang
+
+        # 3. Try language from authenticated user's preferences (if User model has 'language' field)
+        if current_user.is_authenticated and hasattr(current_user, 'language') and current_user.language:
             return current_user.language
-        return request.accept_languages.best_match(app.config['LANGUAGES'])
+        
+        # 4. Fallback to browser's accepted languages
+        return request.accept_languages.best_match(app.config['LANGUAGES']) or app.config['BABEL_DEFAULT_LOCALE']
+    
     babel.locale_selector_func = get_locale
 
-    limiter.init_app(app) # Initialize Limiter with the app
+    # Import User and Role models outside the app_context block but inside create_app
+    from .models import User, Role
 
-    # Setup Flask-Security-Too
-    from app.models import User, Role # Import models needed for user_datastore
-    user_datastore = SQLAlchemySessionUserDatastore(db.session, User, Role)
-    security.init_app(app, user_datastore)
+    with app.app_context():
+        # Create database tables (only if they don't exist)
+        db.create_all()
+        
+        # Initialize Flask-Security user datastore
+        user_datastore.init_datastore(db.session, User, Role)
+        
+        # Initialize Flask-Security with a SINGLE init_app call
+        security.init_app(
+            app,
+            user_datastore,
+            register_form=ExtendRegisterForm,
+            login_form=ExtendedLoginForm
+        )
+
+        # Create default roles if they don't exist
+        if not user_datastore.find_role('landlord'):
+            user_datastore.create_role(name='landlord', description='Property owner/manager')
+        if not user_datastore.find_role('tenant'):
+            user_datastore.create_role(name='tenant', description='Property occupant')
+        if not user_datastore.find_role('admin'):
+            user_datastore.create_role(name='admin', description='System administrator')
+        db.session.commit()  # Commit role creation
 
     # Register Blueprints
     from .routes import main as main_blueprint
     app.register_blueprint(main_blueprint)
-    
-    # --- Scheduler Setup ---
-    # Moved scheduler start here to ensure app context is available
-    from .tasks import check_overdue_payments, refresh_mpesa_token # Assuming tasks.py exists
+
+    # Initialize and configure APScheduler
     if not scheduler.running:
-        scheduler.start()
-        # Add tasks to scheduler (example)
-        scheduler.add_job(refresh_mpesa_token, 'interval', hours=1, id='mpesa_token_refresh', replace_existing=True)
-        scheduler.add_job(check_overdue_payments, 'cron', hour=3, minute=0, id='overdue_check', replace_existing=True)
+        # sync_offline_payments: every 15 minutes
+        scheduler.add_job(
+            func=sync_offline_payments,
+            trigger='interval',
+            minutes=15,
+            args=[app],
+            id='sync_offline_payments',
+            name='Sync Offline Payments',
+            replace_existing=True
+        )
 
-    # Initialize APScheduler tasks
-    if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-        with app.app_context():
-            scheduler.add_job(
-                'app.tasks:check_and_generate_rent_invoices',
-                trigger='cron',
-                id='rent_invoices',
-                day='1',  # Run on 1st of every month
-                hour='0',
-                minute='0',
-                replace_existing=True
-            )
-            scheduler.add_job(
-                'app.tasks:send_payment_reminders',
-                trigger='cron',
-                id='payment_reminders',
-                hour='9',  # Run daily at 9 AM
-                minute='0',
-                replace_existing=True
-            )
-            scheduler.add_job(
-                'app.tasks:sync_offline_payments',
-                trigger='interval',
-                id='sync_offline_payments',
-                minutes=30,  # Run every 30 minutes
-                replace_existing=True
-            )
-            scheduler.add_job(
-                'app.tasks:refresh_mpesa_token',
-                trigger='interval',
-                id='mpesa_token_refresh',
-                minutes=50,  # Token expires after 1 hour
-                replace_existing=True
-            )
-            if not scheduler.running:
-                scheduler.start()
+        # refresh_mpesa_token: every 1 hour
+        scheduler.add_job(
+            func=refresh_mpesa_token,
+            trigger='interval',
+            hours=1,
+            args=[app],
+            id='mpesa_token_refresh',
+            name='Refresh M-Pesa Token',
+            replace_existing=True
+        )
 
-    # Error handlers
+        # check_and_generate_rent_invoices: once a month on the 1st
+        scheduler.add_job(
+            func=check_and_generate_rent_invoices,
+            trigger='cron',
+            day='1',
+            hour=2,
+            args=[app],
+            id='generate_rent_invoices',
+            name='Generate Monthly Rent Invoices',
+            replace_existing=True
+        )
+
+        # send_payment_reminders: daily at 9 AM
+        scheduler.add_job(
+            func=send_payment_reminders,
+            trigger='cron',
+            hour=9,
+            minute=0,
+            args=[app],
+            id='send_payment_reminders',
+            name='Send Payment Reminders',
+            replace_existing=True
+        )
+
+        # send_upcoming_rent_reminders: daily at 6 AM
+        scheduler.add_job(
+            func=send_upcoming_rent_reminders,
+            trigger='cron',
+            hour=6,
+            minute=0,
+            args=[app],
+            id='send_upcoming_rent_reminders',
+            name='Send Upcoming Rent Reminders',
+            replace_existing=True
+        )
+
+        # send_overdue_reminders: daily at 10 AM
+        scheduler.add_job(
+            func=send_overdue_reminders,
+            trigger='cron',
+            hour=10,
+            minute=0,
+            args=[app],
+            id='send_overdue_reminders',
+            name='Send Overdue Reminders',
+            replace_existing=True
+        )
+
+        # check_overdue_payments: daily at 11 AM
+        scheduler.add_job(
+            func=check_overdue_payments,
+            trigger='cron',
+            hour=11,
+            minute=0,
+            args=[app],
+            id='check_overdue_payments',
+            name='Check Overdue Payments',
+            replace_existing=True
+        )
+
+        # Start the scheduler
+        try:
+            scheduler.start()
+            app.logger.info('APScheduler started successfully')
+        except Exception as e:
+            app.logger.error(f'Error starting APScheduler: {e}')
+
+    # Set scheduler as app attribute for later access/shutdown
+    app.scheduler = scheduler
+
+    # Set up error handlers
+    from .errors import init_error_handlers
+    init_error_handlers(app)
+    
+    # Error handlers for HTTP status codes
     @app.errorhandler(404)
     def not_found_error(error):
+        app.logger.error(f"404 Not Found: {request.url}")
         return render_template('errors/404.html'), 404
 
     @app.errorhandler(500)
     def internal_error(error):
-        db.session.rollback()
+        db.session.rollback()  # Rollback any pending database transactions on 500 error
+        app.logger.exception(f"500 Internal Server Error for URL: {request.url}")
         return render_template('errors/500.html'), 500
 
-    # Jinja2 filters and globals
-    app.jinja_env.filters['currency'] = lambda value: f"KSh {value:,.2f}"
-    app.jinja_env.filters['phone'] = lambda number: f"+254{number[-9:]}" if number else ""
+    # Jinja2 filters and globals available in all templates
+    app.jinja_env.filters['currency'] = lambda value: f"KSh {value:,.2f}" if value is not None else "KSh 0.00"
+    app.jinja_env.filters['phone'] = lambda number: f"+254{str(number)[-9:]}" if number and len(str(number)) >= 9 else ""
     
     app.jinja_env.globals.update(
         current_year=datetime.utcnow().year,
@@ -117,10 +275,14 @@ def create_app(config_name='development'):
     @app.before_request
     def check_offline_mode():
         g.is_offline = not check_internet_connection()
+        g.lang = babel.locale_selector_func()
 
     return app
 
 def check_internet_connection():
+    """
+    Checks if there's an active internet connection by trying to reach Google.
+    """
     try:
         requests.get("https://www.google.com", timeout=3)
         return True

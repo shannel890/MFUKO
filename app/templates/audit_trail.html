@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Audit Trail') }} - REPT{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>{{ _('Audit Trail') }}</h2>
+</div>
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>{{ _('Timestamp') }}</th>
+                        <th>{{ _('User') }}</th>
+                        <th>{{ _('Action') }}</th>
+                        <th>{{ _('Table') }}</th>
+                        <th>{{ _('Record ID') }}</th>
+                        <th>{{ _('IP Address') }}</th>
+                        <th>{{ _('Details') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in audit_logs %}
+                    <tr>
+                        <td>{{ log.timestamp.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>{{ log.user.email if log.user else '-' }}</td>
+                        <td>{{ log.action }}</td>
+                        <td>{{ log.table_name or '-' }}</td>
+                        <td>{{ log.record_id or '-' }}</td>
+                        <td>{{ log.ip_address or '-' }}</td>
+                        <td>{{ log.details or '-' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="7" class="text-center text-muted">{{ _('No audit logs found.') }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

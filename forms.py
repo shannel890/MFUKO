@@ -11,7 +11,7 @@ from wtforms import (
     DecimalField,
     DateField,
     TextAreaField,
-    IntegerField # For number_of_units, due_day_of_month, grace_period_days
+    IntegerField
 )
 from wtforms.validators import (
     DataRequired,
@@ -22,49 +22,40 @@ from wtforms.validators import (
     ValidationError,
     Regexp
 )
-from flask_security.forms import RegisterForm, LoginForm # For extending Flask-Security forms
-from flask_babel import lazy_gettext as _l # For multi-language support
+from flask_security.forms import RegisterForm, LoginForm
+from flask_babel import lazy_gettext as _l
+from flask import current_app # Import current_app for logging
 
-# Import your database models for dynamic choices
-# Ensure these models are accessible (e.g., app.models)
-try:
-    from app.models import County, Property, Tenant
-    # For dynamic choices, you might need to ensure you have an active Flask app context
-    # or pass a list of objects to the form's __init__ method if querying outside a request context.
-    # For simplicity, these queries will typically run within a request context where db.session is available.
-except ImportError:
-    # Fallback for when models might not be fully initialized during initial Flask-WTF import
-    # This might happen during app startup or when forms are imported before db is fully set up.
-    # In a real app, ensure your app context is correct or pass choices dynamically.
-    print("Warning: Could not import models directly in forms.py. Dynamic choices might fail without app context.")
-    class County:
-        id = 0
-        name = "Default County"
-        @staticmethod
-        def query(): return type('', (), {'all': lambda: []})() # Mock for initial import
-    class Property:
-        id = 0
-        name = "Default Property"
-        @staticmethod
-        def query(): return type('', (), {'all': lambda: []})()
-    class Tenant:
-        id = 0
-        name = "Default Tenant"
-        @staticmethod
-        def query(): return type('', (), {'all': lambda: []})()
+# Deferred imports to avoid circular dependencies
+County = None
+Property = None
+Tenant = None
+
+def init_models():
+    """Initialize model references. Call this after app context is setup."""
+    global County, Property, Tenant
+    from app.models import County as CountyModel, Property as PropertyModel, Tenant as TenantModel
+    County = CountyModel
+    Property = PropertyModel
+    Tenant = TenantModel
 
 
 # --- Custom Validators ---
 def validate_phone_number_format(form, field):
-    """Custom validator for phone number: checks digits only and minimum length."""
+    """
+    Custom validator for phone number: checks for digits only and minimum length.
+    Cleans the input by removing non-digit characters.
+    """
     if field.data:
         # Remove any non-digit characters for validation and cleaning
         digits_only = ''.join(filter(str.isdigit, field.data))
         if not digits_only.isdigit():
             raise ValidationError(_l('Phone number must contain only digits.'))
-        if len(digits_only) < 9: # Kenyan phone numbers are typically 9 or 10 digits after leading 0
+        # Kenyan phone numbers are typically 9 or 10 digits after leading 0
+        if len(digits_only) < 9:
             raise ValidationError(_l('Phone number must contain at least 9 digits (excluding country code).'))
-        field.data = digits_only # Clean the data for storage
+        # Clean the data for storage, retaining only digits
+        field.data = digits_only
 
 def validate_date_order(form, field):
     """Custom validator to ensure end date is not before start date."""
@@ -76,13 +67,20 @@ def validate_date_order(form, field):
 
 class ExtendRegisterForm(RegisterForm):
     """Enhanced registration form with additional user fields."""
+    username = StringField(
+        _l('Username'),
+        validators=[
+            DataRequired(_l('Username is required.')),
+            Length(min=3, max=80, message=_l('Username must be between 3 and 80 characters.')),
+        ]
+    )
+
     first_name = StringField(
         _l('First Name'),
         validators=[
             DataRequired(_l('First name is required.')),
             Length(min=2, max=50, message=_l('First name must be between 2 and 50 characters.'))
-        ],
-        render_kw={"placeholder": _l("Enter your first name"), "autocomplete": "given-name"}
+        ]
     )
 
     last_name = StringField(
@@ -90,9 +88,19 @@ class ExtendRegisterForm(RegisterForm):
         validators=[
             DataRequired(_l('Last name is required.')),
             Length(min=2, max=50, message=_l('Last name must be between 2 and 50 characters.'))
-        ],
-        render_kw={"placeholder": _l("Enter your last name"), "autocomplete": "family-name"}
+        ]
     )
+
+    def __init__(self, *args, **kwargs):
+        super(ExtendRegisterForm, self).__init__(*args, **kwargs)
+        # You can customize field attributes here if needed
+
+    def validate(self):
+        # Use WTForms validation first
+        if not super(ExtendRegisterForm, self).validate():
+            return False
+        # Add any custom validation here
+        return True
 
     phone_number = TelField(
         _l('Phone Number (Optional)'),
@@ -115,7 +123,7 @@ class ExtendRegisterForm(RegisterForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Populate county choices dynamically
-        # Ensure County model is accessible and db.session is active
+        # This will run within a Flask request context, where current_app and db.session are available.
         try:
             counties = County.query.filter_by(active=True).order_by(County.name).all()
             self.county_id.choices = [
@@ -123,13 +131,13 @@ class ExtendRegisterForm(RegisterForm):
                 for county in counties
             ]
         except Exception as e:
-            print(f"Error populating county choices: {e}")
-            self.county_id.choices = [] # Fallback
-        # Add default "Select County" option
+            current_app.logger.error(f"Error populating county choices for ExtendRegisterForm: {e}")
+            self.county_id.choices = [] # Fallback to empty choices
+        # Add default "Select County" option at the beginning
         self.county_id.choices.insert(0, (0, _l('Select your county...')))
 
     def validate_county_id(self, field):
-        """Ensure a valid county is selected (not the default placeholder)."""
+        """Ensure a valid county is selected (not the default placeholder 0)."""
         if field.data == 0:
             raise ValidationError(_l('Please select your county.'))
 
@@ -138,9 +146,7 @@ class ExtendedLoginForm(LoginForm):
     """Enhanced login form with better styling support."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Add placeholder text and styling classes directly, as done previously
-        # The render_kw attributes might be passed by Flask-Security automatically
-        # if you configure it to use your forms. If not, this is the place.
+        # Add placeholder text and styling classes directly
         self.email.render_kw = {
             'placeholder': _l('Enter your email address'),
             'class': 'form-control form-control-lg',
@@ -372,7 +378,7 @@ class TenantForm(FlaskForm):
             else:
                 self.property_id.choices = [] # No properties if not authenticated/not landlord
         except Exception as e:
-            print(f"Error populating property choices for TenantForm: {e}")
+            current_app.logger.error(f"Error populating property choices for TenantForm: {e}")
             self.property_id.choices = [] # Fallback
         self.property_id.choices.insert(0, (0, _l('Select a Property...')))
 
@@ -457,7 +463,7 @@ class RecordPaymentForm(FlaskForm):
             else:
                 self.tenant_id.choices = []
         except Exception as e:
-            print(f"Error populating tenant choices for RecordPaymentForm: {e}")
+            current_app.logger.error(f"Error populating tenant choices for RecordPaymentForm: {e}")
             self.tenant_id.choices = [] # Fallback
         self.tenant_id.choices.insert(0, (0, _l('Select a Tenant...')))
 

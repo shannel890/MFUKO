@@ -1,0 +1,515 @@
+2025-06-13 21:12:24,714 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:37]
+2025-06-13 21:20:26,777 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:37]
+2025-06-13 21:23:13,025 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:37]
+2025-06-13 21:23:20,799 ERROR: 404 Not Found: http://127.0.0.1:5000/favicon.ico [in /home/shannel/Desktop/MFUKO/app/__init__.py:159]
+2025-06-13 21:33:26,762 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:37]
+2025-06-13 21:34:03,228 ERROR: Exception on /auth/login [POST] [in /home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py:875]
+Traceback (most recent call last):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/decorators.py", line 486, in decorated
+    return current_app.ensure_sync(fn)(*args, **kwargs)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/views.py", line 178, in login
+    if form.validate_on_submit():
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_wtf/form.py", line 86, in validate_on_submit
+    return self.is_submitted() and self.validate(extra_validators=extra_validators)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/forms.py", line 594, in validate
+    hash_password(self.password.data)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/utils.py", line 413, in hash_password
+    password = get_hmac(password).decode("ascii")
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/utils.py", line 339, in get_hmac
+    raise RuntimeError(
+RuntimeError: The configuration value `SECURITY_PASSWORD_SALT` must not be None when the value of `SECURITY_PASSWORD_HASH` is set to "argon2"
+2025-06-13 21:34:03,231 ERROR: 500 Internal Server Error for URL: http://127.0.0.1:5000/auth/login?next=/dashboard [in /home/shannel/Desktop/MFUKO/app/__init__.py:165]
+Traceback (most recent call last):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/decorators.py", line 486, in decorated
+    return current_app.ensure_sync(fn)(*args, **kwargs)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/views.py", line 178, in login
+    if form.validate_on_submit():
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_wtf/form.py", line 86, in validate_on_submit
+    return self.is_submitted() and self.validate(extra_validators=extra_validators)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/forms.py", line 594, in validate
+    hash_password(self.password.data)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/utils.py", line 413, in hash_password
+    password = get_hmac(password).decode("ascii")
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/utils.py", line 339, in get_hmac
+    raise RuntimeError(
+RuntimeError: The configuration value `SECURITY_PASSWORD_SALT` must not be None when the value of `SECURITY_PASSWORD_HASH` is set to "argon2"
+2025-06-13 21:37:16,431 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:37]
+2025-06-13 21:38:46,861 ERROR: Exception on /auth/register [POST] [in /home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py:875]
+Traceback (most recent call last):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/decorators.py", line 642, in wrapper
+    return current_app.ensure_sync(f)(*args, **kwargs)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/decorators.py", line 486, in decorated
+    return current_app.ensure_sync(fn)(*args, **kwargs)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/views.py", line 306, in register
+    user = register_user(form)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/registerable.py", line 49, in register_user
+    user_model_kwargs["password"] = hash_password(user_model_kwargs["password"])
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/utils.py", line 413, in hash_password
+    password = get_hmac(password).decode("ascii")
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/utils.py", line 339, in get_hmac
+    raise RuntimeError(
+RuntimeError: The configuration value `SECURITY_PASSWORD_SALT` must not be None when the value of `SECURITY_PASSWORD_HASH` is set to "argon2"
+2025-06-13 21:38:46,868 ERROR: 500 Internal Server Error for URL: http://127.0.0.1:5000/auth/register [in /home/shannel/Desktop/MFUKO/app/__init__.py:165]
+Traceback (most recent call last):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/decorators.py", line 642, in wrapper
+    return current_app.ensure_sync(f)(*args, **kwargs)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/decorators.py", line 486, in decorated
+    return current_app.ensure_sync(fn)(*args, **kwargs)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/views.py", line 306, in register
+    user = register_user(form)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/registerable.py", line 49, in register_user
+    user_model_kwargs["password"] = hash_password(user_model_kwargs["password"])
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/utils.py", line 413, in hash_password
+    password = get_hmac(password).decode("ascii")
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/utils.py", line 339, in get_hmac
+    raise RuntimeError(
+RuntimeError: The configuration value `SECURITY_PASSWORD_SALT` must not be None when the value of `SECURITY_PASSWORD_HASH` is set to "argon2"
+2025-06-13 21:40:50,541 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:37]
+2025-06-13 23:30:35,783 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:37]
+2025-06-14 11:43:48,216 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 11:43:48,375 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 11:43:55,488 ERROR: 404 Not Found: http://127.0.0.1:5000/favicon.ico [in /home/shannel/Desktop/MFUKO/app/__init__.py:242]
+2025-06-14 11:58:48,382 INFO: No offline payments to sync. [in /home/shannel/Desktop/MFUKO/app/tasks.py:244]
+2025-06-14 12:01:16,474 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 12:01:16,641 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 12:39:15,236 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 12:39:15,372 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 12:40:07,140 ERROR: Exception on /auth/register [POST] [in /home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py:875]
+Traceback (most recent call last):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+psycopg2.errors.UndefinedColumn: column user.last_login_at does not exist
+LINE 1: ...ctive, "user".fs_uniquifier, "user".confirmed_at, "user".las...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/decorators.py", line 642, in wrapper
+    return current_app.ensure_sync(f)(*args, **kwargs)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/decorators.py", line 486, in decorated
+    return current_app.ensure_sync(fn)(*args, **kwargs)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/views.py", line 303, in register
+    if form.validate_on_submit():
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_wtf/form.py", line 86, in validate_on_submit
+    return self.is_submitted() and self.validate(extra_validators=extra_validators)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/forms.py", line 693, in validate
+    if not super().validate(**kwargs):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/wtforms/form.py", line 330, in validate
+    return super().validate(extra)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/wtforms/form.py", line 147, in validate
+    if not field.validate(self, extra):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/wtforms/fields/core.py", line 234, in validate
+    stop_validation = self._run_validation_chain(form, chain)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/wtforms/fields/core.py", line 254, in _run_validation_chain
+    validator(form, self)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/forms.py", line 221, in unique_user_email
+    form.existing_email_user = _datastore.find_user(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/datastore.py", line 791, in find_user
+    return self.db.session.scalar(stmt)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/orm/scoping.py", line 1840, in scalar
+    return self._proxied.scalar(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/orm/session.py", line 2413, in scalar
+    return self._execute_internal(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/orm/session.py", line 2251, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1415, in execute
+    return meth(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column user.last_login_at does not exist
+LINE 1: ...ctive, "user".fs_uniquifier, "user".confirmed_at, "user".las...
+                                                             ^
+
+[SQL: SELECT "user".id, "user".username, "user".email, "user".password, "user".active, "user".fs_uniquifier, "user".confirmed_at, "user".last_login_at, "user".current_login_at, "user".last_login_ip, "user".current_login_ip, "user".login_count, "user".first_name, "user".last_name, "user".phone_number, "user".county_id, "user".language, "user".notification_preferences, role_1.id AS id_1, role_1.name, role_1.description 
+FROM "user" LEFT OUTER JOIN (roles_users AS roles_users_1 JOIN role AS role_1 ON role_1.id = roles_users_1.role_id) ON "user".id = roles_users_1.user_id 
+WHERE lower("user".email) = lower(%(lower_1)s)]
+[parameters: {'lower_1': 'rotich@gmail.com'}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2025-06-14 12:40:07,145 ERROR: 500 Internal Server Error for URL: http://127.0.0.1:5000/auth/register [in /home/shannel/Desktop/MFUKO/app/__init__.py:248]
+Traceback (most recent call last):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+psycopg2.errors.UndefinedColumn: column user.last_login_at does not exist
+LINE 1: ...ctive, "user".fs_uniquifier, "user".confirmed_at, "user".las...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/decorators.py", line 642, in wrapper
+    return current_app.ensure_sync(f)(*args, **kwargs)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/decorators.py", line 486, in decorated
+    return current_app.ensure_sync(fn)(*args, **kwargs)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/views.py", line 303, in register
+    if form.validate_on_submit():
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_wtf/form.py", line 86, in validate_on_submit
+    return self.is_submitted() and self.validate(extra_validators=extra_validators)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/forms.py", line 693, in validate
+    if not super().validate(**kwargs):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/wtforms/form.py", line 330, in validate
+    return super().validate(extra)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/wtforms/form.py", line 147, in validate
+    if not field.validate(self, extra):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/wtforms/fields/core.py", line 234, in validate
+    stop_validation = self._run_validation_chain(form, chain)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/wtforms/fields/core.py", line 254, in _run_validation_chain
+    validator(form, self)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/forms.py", line 221, in unique_user_email
+    form.existing_email_user = _datastore.find_user(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/datastore.py", line 791, in find_user
+    return self.db.session.scalar(stmt)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/orm/scoping.py", line 1840, in scalar
+    return self._proxied.scalar(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/orm/session.py", line 2413, in scalar
+    return self._execute_internal(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/orm/session.py", line 2251, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1415, in execute
+    return meth(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column user.last_login_at does not exist
+LINE 1: ...ctive, "user".fs_uniquifier, "user".confirmed_at, "user".las...
+                                                             ^
+
+[SQL: SELECT "user".id, "user".username, "user".email, "user".password, "user".active, "user".fs_uniquifier, "user".confirmed_at, "user".last_login_at, "user".current_login_at, "user".last_login_ip, "user".current_login_ip, "user".login_count, "user".first_name, "user".last_name, "user".phone_number, "user".county_id, "user".language, "user".notification_preferences, role_1.id AS id_1, role_1.name, role_1.description 
+FROM "user" LEFT OUTER JOIN (roles_users AS roles_users_1 JOIN role AS role_1 ON role_1.id = roles_users_1.role_id) ON "user".id = roles_users_1.user_id 
+WHERE lower("user".email) = lower(%(lower_1)s)]
+[parameters: {'lower_1': 'rotich@gmail.com'}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2025-06-14 12:54:15,374 INFO: No offline payments to sync. [in /home/shannel/Desktop/MFUKO/app/tasks.py:244]
+2025-06-14 13:09:15,369 INFO: No offline payments to sync. [in /home/shannel/Desktop/MFUKO/app/tasks.py:244]
+2025-06-14 13:24:15,369 INFO: No offline payments to sync. [in /home/shannel/Desktop/MFUKO/app/tasks.py:244]
+2025-06-14 13:41:40,412 INFO: No offline payments to sync. [in /home/shannel/Desktop/MFUKO/app/tasks.py:244]
+2025-06-14 13:41:40,841 ERROR: Failed to refresh M-Pesa token due to network or HTTP error: 400 Client Error: Bad Request for url: https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials [in /home/shannel/Desktop/MFUKO/app/tasks.py:66]
+Traceback (most recent call last):
+  File "/home/shannel/Desktop/MFUKO/app/tasks.py", line 45, in refresh_mpesa_token
+    response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials
+2025-06-14 13:54:16,178 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 13:54:16,306 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 13:55:12,393 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 13:55:12,525 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 13:55:50,052 ERROR: Exception on /auth/register [POST] [in /home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py:875]
+Traceback (most recent call last):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+psycopg2.errors.UndefinedColumn: column user.last_login_at does not exist
+LINE 1: ...ctive, "user".fs_uniquifier, "user".confirmed_at, "user".las...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/decorators.py", line 642, in wrapper
+    return current_app.ensure_sync(f)(*args, **kwargs)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/decorators.py", line 486, in decorated
+    return current_app.ensure_sync(fn)(*args, **kwargs)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/views.py", line 303, in register
+    if form.validate_on_submit():
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_wtf/form.py", line 86, in validate_on_submit
+    return self.is_submitted() and self.validate(extra_validators=extra_validators)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/forms.py", line 693, in validate
+    if not super().validate(**kwargs):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/wtforms/form.py", line 330, in validate
+    return super().validate(extra)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/wtforms/form.py", line 147, in validate
+    if not field.validate(self, extra):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/wtforms/fields/core.py", line 234, in validate
+    stop_validation = self._run_validation_chain(form, chain)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/wtforms/fields/core.py", line 254, in _run_validation_chain
+    validator(form, self)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/forms.py", line 221, in unique_user_email
+    form.existing_email_user = _datastore.find_user(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/datastore.py", line 791, in find_user
+    return self.db.session.scalar(stmt)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/orm/scoping.py", line 1840, in scalar
+    return self._proxied.scalar(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/orm/session.py", line 2413, in scalar
+    return self._execute_internal(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/orm/session.py", line 2251, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1415, in execute
+    return meth(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column user.last_login_at does not exist
+LINE 1: ...ctive, "user".fs_uniquifier, "user".confirmed_at, "user".las...
+                                                             ^
+
+[SQL: SELECT "user".id, "user".username, "user".email, "user".password, "user".active, "user".fs_uniquifier, "user".confirmed_at, "user".last_login_at, "user".current_login_at, "user".last_login_ip, "user".current_login_ip, "user".login_count, "user".first_name, "user".last_name, "user".phone_number, "user".county_id, "user".language, "user".notification_preferences, role_1.id AS id_1, role_1.name, role_1.description 
+FROM "user" LEFT OUTER JOIN (roles_users AS roles_users_1 JOIN role AS role_1 ON role_1.id = roles_users_1.role_id) ON "user".id = roles_users_1.user_id 
+WHERE lower("user".email) = lower(%(lower_1)s)]
+[parameters: {'lower_1': 'rotich@gmail.com'}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2025-06-14 13:55:50,059 ERROR: 500 Internal Server Error for URL: http://127.0.0.1:5000/auth/register [in /home/shannel/Desktop/MFUKO/app/__init__.py:248]
+Traceback (most recent call last):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+psycopg2.errors.UndefinedColumn: column user.last_login_at does not exist
+LINE 1: ...ctive, "user".fs_uniquifier, "user".confirmed_at, "user".las...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/decorators.py", line 642, in wrapper
+    return current_app.ensure_sync(f)(*args, **kwargs)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/decorators.py", line 486, in decorated
+    return current_app.ensure_sync(fn)(*args, **kwargs)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/views.py", line 303, in register
+    if form.validate_on_submit():
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_wtf/form.py", line 86, in validate_on_submit
+    return self.is_submitted() and self.validate(extra_validators=extra_validators)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/forms.py", line 693, in validate
+    if not super().validate(**kwargs):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/wtforms/form.py", line 330, in validate
+    return super().validate(extra)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/wtforms/form.py", line 147, in validate
+    if not field.validate(self, extra):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/wtforms/fields/core.py", line 234, in validate
+    stop_validation = self._run_validation_chain(form, chain)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/wtforms/fields/core.py", line 254, in _run_validation_chain
+    validator(form, self)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/forms.py", line 221, in unique_user_email
+    form.existing_email_user = _datastore.find_user(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/datastore.py", line 791, in find_user
+    return self.db.session.scalar(stmt)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/orm/scoping.py", line 1840, in scalar
+    return self._proxied.scalar(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/orm/session.py", line 2413, in scalar
+    return self._execute_internal(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/orm/session.py", line 2251, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1415, in execute
+    return meth(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column user.last_login_at does not exist
+LINE 1: ...ctive, "user".fs_uniquifier, "user".confirmed_at, "user".las...
+                                                             ^
+
+[SQL: SELECT "user".id, "user".username, "user".email, "user".password, "user".active, "user".fs_uniquifier, "user".confirmed_at, "user".last_login_at, "user".current_login_at, "user".last_login_ip, "user".current_login_ip, "user".login_count, "user".first_name, "user".last_name, "user".phone_number, "user".county_id, "user".language, "user".notification_preferences, role_1.id AS id_1, role_1.name, role_1.description 
+FROM "user" LEFT OUTER JOIN (roles_users AS roles_users_1 JOIN role AS role_1 ON role_1.id = roles_users_1.role_id) ON "user".id = roles_users_1.user_id 
+WHERE lower("user".email) = lower(%(lower_1)s)]
+[parameters: {'lower_1': 'rotich@gmail.com'}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2025-06-14 14:05:59,366 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 14:05:59,613 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 14:07:05,663 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 14:07:05,787 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 14:07:48,587 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 14:07:48,713 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 14:09:24,090 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 14:09:24,223 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 14:10:12,530 INFO: No offline payments to sync. [in /home/shannel/Desktop/MFUKO/app/tasks.py:244]
+2025-06-14 14:10:40,848 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 14:10:40,978 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 14:11:17,161 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 14:11:17,352 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 14:12:01,333 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 14:12:01,466 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 14:14:39,077 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 14:14:39,212 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 14:14:52,744 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 14:14:52,875 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 14:15:14,907 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 14:15:15,042 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 14:25:12,525 INFO: No offline payments to sync. [in /home/shannel/Desktop/MFUKO/app/tasks.py:244]
+2025-06-14 14:26:40,871 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 14:26:40,994 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 14:29:43,293 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 14:29:43,418 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 14:30:46,858 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:52]
+2025-06-14 14:30:46,992 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 14:40:12,522 INFO: No offline payments to sync. [in /home/shannel/Desktop/MFUKO/app/tasks.py:244]
+2025-06-14 14:50:50,857 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:66]
+2025-06-14 14:50:50,977 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 15:05:50,982 INFO: No offline payments to sync. [in /home/shannel/Desktop/MFUKO/app/tasks.py:244]
+2025-06-14 15:17:02,563 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:66]
+2025-06-14 15:17:02,885 INFO: APScheduler started successfully [in /home/shannel/Desktop/MFUKO/app/__init__.py:228]
+2025-06-14 15:18:22,033 ERROR: Exception on /auth/login [POST] [in /home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py:875]
+Traceback (most recent call last):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/decorators.py", line 486, in decorated
+    return current_app.ensure_sync(fn)(*args, **kwargs)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/views.py", line 178, in login
+    if form.validate_on_submit():
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_wtf/form.py", line 86, in validate_on_submit
+    return self.is_submitted() and self.validate(extra_validators=extra_validators)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/forms.py", line 594, in validate
+    hash_password(self.password.data)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/utils.py", line 413, in hash_password
+    password = get_hmac(password).decode("ascii")
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/utils.py", line 339, in get_hmac
+    raise RuntimeError(
+RuntimeError: The configuration value `SECURITY_PASSWORD_SALT` must not be None when the value of `SECURITY_PASSWORD_HASH` is set to "argon2"
+2025-06-14 15:18:22,039 ERROR: 500 Internal Server Error for URL: http://127.0.0.1:5000/auth/login [in /home/shannel/Desktop/MFUKO/app/__init__.py:248]
+Traceback (most recent call last):
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/decorators.py", line 486, in decorated
+    return current_app.ensure_sync(fn)(*args, **kwargs)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/views.py", line 178, in login
+    if form.validate_on_submit():
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_wtf/form.py", line 86, in validate_on_submit
+    return self.is_submitted() and self.validate(extra_validators=extra_validators)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/forms.py", line 594, in validate
+    hash_password(self.password.data)
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/utils.py", line 413, in hash_password
+    password = get_hmac(password).decode("ascii")
+  File "/home/shannel/Desktop/MFUKO/payment/lib/python3.10/site-packages/flask_security/utils.py", line 339, in get_hmac
+    raise RuntimeError(
+RuntimeError: The configuration value `SECURITY_PASSWORD_SALT` must not be None when the value of `SECURITY_PASSWORD_HASH` is set to "argon2"
+2025-06-14 15:31:31,529 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:66]
+2025-06-14 18:13:59,507 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:66]
+2025-06-14 18:17:25,788 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:66]
+2025-06-14 20:43:59,120 INFO: REPT startup [in /home/shannel/Desktop/MFUKO/app/__init__.py:66]

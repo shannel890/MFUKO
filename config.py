@@ -1,28 +1,32 @@
+# config.py
+
 from decouple import config
 import os
+import secrets # Used to generate a strong random salt
 
 class Config:
     SECRET_KEY = config('SECRET_KEY', default='a_very_secret_key_that_should_be_changed_in_prod')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ECHO = True  # Enable for debugging SQL queries
-    SQLALCHEMY_DATABASE_URI = config(
-        'DATABASE_URL',
-        default=f"postgresql://{config('POSTGRES_USER')}:{config('POSTGRES_PASSWORD')}@"
-                f"{config('POSTGRES_HOST')}:{config('POSTGRES_PORT')}/{config('POSTGRES_DB')}"
-    )
+    SQLALCHEMY_ECHO = False # Set to True for debugging SQL queries
 
     # Flask-Security-Too Configuration
-    SECURITY_PASSWORD_SALT = config('SECURITY_PASSWORD_SALT', default='a_long_random_string_for_password_salt')
+    # IMPORTANT: SECURITY_PASSWORD_SALT MUST BE SET AND BE A STRONG, RANDOM STRING IN PRODUCTION
+    # The value must be a long, random string. It is critical for secure password hashing.
+    SECURITY_PASSWORD_SALT = config('SECURITY_PASSWORD_SALT') # No default - must be set via environment variable
+    SECURITY_PASSWORD_HASH = "argon2" # Recommended strong hashing algorithm
+    
+    # Flask-Limiter Configuration
+    RATELIMIT_STORAGE_URL = config('RATELIMIT_STORAGE_URL', default='memory://')
+    RATELIMIT_DEFAULT = "200 per day"
+    RATELIMIT_HEADERS_ENABLED = True
+
     SECURITY_REGISTERABLE = True
-    SECURITY_CONFIRMABLE = False
-    SECURITY_SEND_REGISTER_EMAIL = False
+    SECURITY_CONFIRMABLE = False # Set to True to enable email confirmation
+    SECURITY_SEND_REGISTER_EMAIL = False # Usually False if confirmable is False
     SECURITY_RECOVERABLE = True
     SECURITY_CHANGEABLE = True
-    SECURITY_TWO_FACTOR = False  # Disable two-factor auth for now
-    SECURITY_UNIFIED_SIGNIN = False  # Disable unified signin
-    SECURITY_USER_IDENTITY_ATTRIBUTES = [{"email": {"mapper": lambda x: x, "case_insensitive": True}}]
-    SECURITY_PASSWORD_LENGTH_MIN = 8
-    SECURITY_PASSWORD_COMPLEXITY_CHECKER = 'zxcvbn'
+    SECURITY_UNIFIED_SIGNIN = False # Allow login with email or username if applicable
+    SECURITY_FLASH_MESSAGES = True # Ensure flash messages are enabled
 
     # Flask-Mail Configuration (for email notifications)
     MAIL_SERVER = config('MAIL_SERVER', default='smtp.mailtrap.io') # Or your actual SMTP server
@@ -33,19 +37,19 @@ class Config:
     MAIL_DEFAULT_SENDER = config('MAIL_DEFAULT_SENDER', default='noreply@countyportal.com')
 
     # Twilio Configuration (for SMS notifications)
-    TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='ACxxxxxxxxxxxxxxxxxxxxx')
-    TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='your_twilio_auth_token')
-    TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='+15017122661') # Your Twilio number
+    TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default=None)
+    TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default=None)
+    TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='+15017122661')
 
     # M-Pesa API Configuration
-    MPESA_CONSUMER_KEY = config('MPESA_CONSUMER_KEY', default='your_mpesa_consumer_key')
-    MPESA_CONSUMER_SECRET = config('MPESA_CONSUMER_SECRET', default='your_mpesa_consumer_secret')
-    MPESA_PASSKEY = config('MPESA_PASSKEY', default='your_mpesa_passkey') # For STK Push
-    MPESA_PAYBILL = config('MPESA_PAYBILL', default='your_mpesa_paybill') # Your PayBill number
-    MPESA_INITIATOR_PASSWORD = config('MPESA_INITIATOR_PASSWORD', default='your_initiator_password') # For B2C/C2B validation
-    MPESA_SAF_CALLBACK_URL = config('MPESA_SAF_CALLBACK_URL', default='[https://yourdomain.com/mpesa/callback](https://yourdomain.com/mpesa/callback)') # Publicly accessible URL
+    MPESA_CONSUMER_KEY = config('MPESA_CONSUMER_KEY', default=None)
+    MPESA_CONSUMER_SECRET = config('MPESA_CONSUMER_SECRET', default=None)
+    MPESA_PASSKEY = config('MPESA_PASSKEY', default=None) # For STK Push
+    MPESA_PAYBILL = config('MPESA_PAYBILL', default='174379') # Daraja test till number as default
+    MPESA_INITIATOR_PASSWORD = config('MPESA_INITIATOR_PASSWORD', default='Safaricom999!') # Daraja test initiator password as default
+    MPESA_SAF_CALLBACK_URL = config('MPESA_SAF_CALLBACK_URL', default=None) # Crucial for M-Pesa callbacks
 
-    # APScheduler Configuration (if using Flask-APScheduler)
+    # APScheduler Configuration
     SCHEDULER_API_ENABLED = True
     SCHEDULER_JOB_DEFAULTS = {
         'coalesce': True,
@@ -54,83 +58,71 @@ class Config:
     SCHEDULER_EXECUTORS = {
         'default': {'type': 'threadpool', 'max_workers': 20}
     }
-    # For persistence across restarts (production)
-    # SCHEDULER_JOBSTORES = {
-    #     'default': {'type': 'sqlalchemy', 'url': 'sqlite:///jobs.sqlite'}
-    # }
 
     # Flask-Babel Configuration
+    LANGUAGES = ['en', 'sw']
     BABEL_DEFAULT_LOCALE = 'en'
     BABEL_DEFAULT_TIMEZONE = 'Africa/Nairobi'
-    LANGUAGES = ['en', 'sw']
-    
-    # Flask-Limiter Configuration
-    RATELIMIT_DEFAULT = "200 per day;50 per hour"
-    RATELIMIT_STORAGE_URL = "memory://"  # Use Redis in production
-    
-    # Report Generation
-    REPORT_UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app', 'static', 'reports')
-    ALLOWED_EXTENSIONS = {'pdf', 'csv', 'xlsx'}
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
 
-    # Offline Mode Configuration
-    OFFLINE_CACHE_LIMIT = 1000  # Maximum number of offline transactions to store
-    SYNC_RETRY_LIMIT = 3  # Number of times to retry syncing offline data
-    
-    # Audit Trail Configuration
-    AUDIT_LOG_DAYS = 365  # Days to keep audit logs
-    AUDIT_ENABLED = True
-    
-    # Payment Configuration
-    PAYMENT_GRACE_PERIOD = 5  # Default grace period in days
-    PAYMENT_REMINDER_DAYS = [5, 3, 1]  # Days before due date to send reminders
-    PAYMENT_LATE_FEE_PERCENTAGE = 0.05  # 5% late fee
-    
-    # Security Configuration
-    PASSWORD_MIN_LENGTH = 8
-    PASSWORD_COMPLEXITY = True  # Require mixed case, numbers, and special characters
-    SESSION_TIMEOUT = 3600  # 1 hour session timeout
-    REMEMBER_COOKIE_DURATION = 2592000  # 30 days for "remember me"
+    # Flask-Limiter config
+    # Default to memory storage for dev, but requires a proper backend for production
+    RATELIMIT_STORAGE_URL = config('RATELIMIT_STORAGE_URL', default='memory://')
 
-    # Database Configuration
-    POSTGRES_HOST = config('POSTGRES_HOST', default='localhost')
-    POSTGRES_PORT = config('POSTGRES_PORT', default=5432, cast=int)
-    POSTGRES_DB = config('POSTGRES_DB', default='county')
-    POSTGRES_USER = config('POSTGRES_USER', default='devuser')
-    POSTGRES_PASSWORD = config('POSTGRES_PASSWORD', default='devpassword')
-    SQLALCHEMY_DATABASE_URI = config(
-        'DATABASE_URL',
-        default='postgresql://devuser:devpassword@localhost:5432/county'
-    )
-
-    @staticmethod
-    def init_app(app):
-        # Create upload directories if they don't exist
-        if not os.path.exists(Config.REPORT_UPLOAD_FOLDER):
-            os.makedirs(Config.REPORT_UPLOAD_FOLDER)
 
 class DevelopmentConfig(Config):
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///rept_dev.db'
     DEBUG = True
     SQLALCHEMY_ECHO = True
-    # Override mail/twilio for development
+
+    # Development-specific security salt
+    # WARNING: This is only for development! Never use this default in production!
+    # For local development convenience, we provide a default salt to avoid requiring env vars
+    # In production, you must set SECURITY_PASSWORD_SALT via environment variables
+    SECURITY_PASSWORD_SALT = config('SECURITY_PASSWORD_SALT_DEV', 
+                                  default='dev-only-K86tq9PmGXq6yZtS4LkVJp2DrXT7DmYs5fQNhEj8xRv')  # 43-char random string
+
+    # Overrides for development mail/twilio/mpesa
     MAIL_SERVER = 'localhost'
     MAIL_PORT = 1025 # For mailhog/mailtrap development
     MAIL_USE_TLS = False
     MAIL_USERNAME = None
     MAIL_PASSWORD = None
-    MPESA_SAF_CALLBACK_URL = config('MPESA_SAF_CALLBACK_URL_DEV', default='[http://127.0.0.1:5000/mpesa/callback](http://127.0.0.1:5000/mpesa/callback)') # Local/ngrok URL
+    TWILIO_ACCOUNT_SID = 'ACxxxxxxxxxxxxxxxxxxxxx_DEV' # Dummy
+    TWILIO_AUTH_TOKEN = 'your_twilio_auth_token_DEV' # Dummy
+    MPESA_CONSUMER_KEY = 'consumer_key_DEV'
+    MPESA_CONSUMER_SECRET = 'consumer_secret_DEV'
+    MPESA_SAF_CALLBACK_URL = config('MPESA_SAF_CALLBACK_URL_DEV', default='http://127.0.0.1:5000/mpesa/callback') # Local/ngrok URL
+
 
 class ProductionConfig(Config):
-    DEBUG = False
-    REMEMBER_COOKIE_SECURE = True
-    SESSION_COOKIE_SECURE = True
-    RATELIMIT_STORAGE_URL = config('REDIS_URL', default='redis://localhost:6379/0')
+    # These configurations MUST be provided via environment variables in production
+    SQLALCHEMY_DATABASE_URI = config('DATABASE_URL')
+    
+    # CRITICAL: PRODUCTION SALT MUST BE SET VIA ENVIRONMENT VARIABLE
+    # This MUST be a unique, cryptographically strong random string
+    # Generate using: python -c "import secrets; print(secrets.token_urlsafe(32))"
+    SECURITY_PASSWORD_SALT = config('SECURITY_PASSWORD_SALT')  # Explicitly no default to force env var in production
+
+    # Production sensitive configs (no defaults here, forcing env var)
+    SECRET_KEY = config('SECRET_KEY')
+    MAIL_USERNAME = config('MAIL_USERNAME')
+    MAIL_PASSWORD = config('MAIL_PASSWORD')
+    TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID')
+    TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN')
+    TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER')
+    MPESA_CONSUMER_KEY = config('MPESA_CONSUMER_KEY')
+    MPESA_CONSUMER_SECRET = config('MPESA_CONSUMER_SECRET')
+    MPESA_PASSKEY = config('MPESA_PASSKEY')
+    MPESA_INITIATOR_PASSWORD = config('MPESA_INITIATOR_PASSWORD')
+    MPESA_SAF_CALLBACK_URL = config('MPESA_SAF_CALLBACK_URL')
+    RATELIMIT_STORAGE_URL = config('RATELIMIT_STORAGE_URL', default='redis://localhost:6379/0') # Recommend Redis in prod
 
 class TestingConfig(Config):
+    """Testing configuration."""
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
-    WTF_CSRF_ENABLED = False
+    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or 'sqlite:///'
 
+# Configuration dictionary
 config_options = {
     'development': DevelopmentConfig,
     'production': ProductionConfig,

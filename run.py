@@ -1,16 +1,14 @@
 import os
-from app import create_app, db # Assuming app/__init__.py has create_app function
-from flask_migrate import Migrate
-from app.models import User, Role, County, Property, Tenant, Payment, AuditLog # Import models for Flask-Migrate
-
-# Use python-dotenv to load .env file in development
 from dotenv import load_dotenv
+from app import create_app
+from extension import db
+from app.models import User, Role, County, Property, Tenant, Payment, AuditLog
+
+# Load environment variables
 load_dotenv()
 
-# Determine config based on environment variable
-config_name = os.getenv('FLASK_CONFIG', 'development')
-app = create_app(config_name)
-migrate = Migrate(app, db)
+# Create the Flask application instance
+app = create_app(os.getenv('FLASK_CONFIG', 'development'))
 
 # Flask shell context (optional, but very useful for development)
 @app.shell_context_processor
