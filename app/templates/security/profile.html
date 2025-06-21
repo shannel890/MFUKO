@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Profile') }} - {{ user.full_name }}{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background-color: #e0f7fa; /* Light blue color */
+        display: flex; /* Use flexbox for centering */
+        justify-content: center; /* Center horizontally */
+        align-items: center; /* Center vertically */
+        min-height: 100vh; /* Ensure it takes full viewport height */
+        margin: 0; /* Remove default body margin */
+    }
+    /* The .card already has good styling from Bootstrap,
+       but you can add more specific rules if needed. */
+    .card-header.bg-primary {
+        background-color: #007bff !important; /* Ensure primary blue is consistent */
+    }
+    .badge.bg-info {
+        background-color: #17a2b8 !important; /* Ensure info blue is consistent */
+    }
+    .btn-primary {
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+    }
+    .btn-warning {
+        background-color: #ffc107 !important;
+        border-color: #ffc107 !important;
+    }
+</style>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">{{ _('User Profile') }}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <strong>{{ _('Username') }}:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ user.username }}
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <strong>{{ _('Full Name') }}:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ user.full_name }}
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <strong>{{ _('Email') }}:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ user.email }}
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <strong>{{ _('Phone Number') }}:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ user.phone_number or _('Not provided') }}
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <strong>{{ _('County') }}:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ user.county.name if user.county else _('Not specified') }}
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <strong>{{ _('Roles') }}:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {% for role in user.roles %}
+                                <span class="badge bg-info me-2">{{ role.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <strong>{{ _('Language') }}:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ _('English') if user.language == 'en' else _('Swahili') }}
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <strong>{{ _('Last Login') }}:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ user.current_login_at.strftime('%Y-%m-%d %H:%M:%S') if user.current_login_at else _('Never') }}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('auth.change_password') }}" class="btn btn-warning">
+                            <i class="fas fa-key"></i> {{ _('Change Password') }}
+                        </a>
+                        <a href="{{ url_for('main.edit_profile') }}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> {{ _('Edit Profile') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

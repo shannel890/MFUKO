@@ -1,0 +1,50 @@
+
+{% extends "base.html"%}
+{% set title = title|default(_fsdomain('Register')) %}
+
+{% from "security/_macros.html" import render_field_with_errors, render_field, render_form_errors, render_field_errors %}
+<style>
+        body {
+            background-color: #56e4f7; /* Light blue color */
+            display: flex; /* Use flexbox for centering */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            min-height: 100vh; /* Ensure it takes full viewport height */
+            margin: 0; /* Remove default body margin */
+            font-family: 'Inter', sans-serif; /* Recommended modern font */
+        }
+        .card {
+            max-width: 500px; /* Limit card width for better appearance */
+            width: 100%; /* Make card responsive */
+            border-radius: 1rem; /* Rounded corners for elegance */
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important; /* Enhanced shadow */
+        }
+        .btn-primary {
+            background-color: #007bff; /* Standard primary blue */
+            border-color: #007bff;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+    </style>
+{% block content %}
+  {% include "security/_messages.html" %}
+  <h1>{{ _fsdomain('Register') }}</h1>
+  <form action="{{ url_for_security('register') }}" method="post" name="register_user_form">
+    {{ register_user_form.hidden_tag() }}
+    {{ render_form_errors(register_user_form) }}
+    {{ render_field_with_errors(register_user_form.email) }}
+    {% if register_user_form.username %}
+      {{ render_field_with_errors(register_user_form.username) }}
+    {% endif %}
+    {{ render_field_with_errors(register_user_form.password) }}
+    {% if register_user_form.password_confirm %}
+      {{ render_field_with_errors(register_user_form.password_confirm) }}
+    {% endif %}
+    {{ render_field_errors(register_user_form.csrf_token) }}
+    {{ render_field(register_user_form.submit) }}
+  </form>
+  {% include "security/_menu.html" %}
+{% endblock content %}

@@ -1,0 +1,73 @@
+
+{% extends "base.html"%}
+{% set title = title|default(_fsdomain('Login')) %}
+
+{% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors, render_form_errors, prop_next %}
+<style>
+        body {
+            background-color: #4ee0f3; /* Light blue color */
+            display: flex; /* Use flexbox for centering */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            min-height: 100vh; /* Ensure it takes full viewport height */
+            margin: 0; /* Remove default body margin */
+            font-family: 'Inter', sans-serif; /* Recommended modern font */
+        }
+        .card {
+            max-width: 500px; /* Limit card width for better appearance */
+            width: 100%; /* Make card responsive */
+            border-radius: 1rem; /* Rounded corners for elegance */
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important; /* Enhanced shadow */
+        }
+        .btn-primary {
+            background-color: #007bff; /* Standard primary blue */
+            border-color: #007bff;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+    </style>
+{% block content %}
+  {% include "security/_messages.html" %}
+  <h1>{{ _fsdomain('Login') }}</h1>
+  <form action="{{ url_for_security('login') }}{{ prop_next() }}" method="post" name="login_user_form">
+    {{ login_user_form.hidden_tag() }}
+    {{ render_form_errors(login_user_form) }}
+    {% if login_user_form.email and "email" in identity_attributes %}
+      {{ render_field_with_errors(login_user_form.email) }}{% endif %}
+    {% if login_user_form.username and "username" in identity_attributes %}
+      {% if login_user_form.email and "email" in identity_attributes %}<h3>{{ _fsdomain("or") }}</h3>{% endif %}
+      {{ render_field_with_errors(login_user_form.username) }}
+    {% endif %}
+    <div class="fs-gap">{{ render_field_with_errors(login_user_form.password) }}</div>
+    {{ render_field_with_errors(login_user_form.remember) }}
+    {{ render_field_errors(login_user_form.csrf_token) }}
+    {{ render_field(login_user_form.submit) }}
+  </form>
+  {% if security.webauthn %}
+    <hr class="fs-gap">
+    <h2>{{ _fsdomain("Use WebAuthn to Sign In") }}</h2>
+    <div>
+      <form method="get" id="wan_signin_form" name="wan_signin_form">
+        <input id="wan_signin" name="wan_signin" type="submit" value="{{ _fsdomain('Sign in with WebAuthn') }}" formaction="{{ url_for_security('wan_signin') }}{{ prop_next() }}">
+      </form>
+    </div>
+  {% endif %}
+  {% if security.oauthglue %}
+    <hr class="fs-gap">
+    <h2>{{ _fsdomain("Use Social Oauth to Sign In") }}</h2>
+    {% for provider in security.oauthglue.provider_names %}
+      <div class="fs-gap">
+        <form method="post" id="{{ provider }}_form" name="{{ provider }}_form">
+          <input id="{{ provider }}" name="{{ provider }}" type="submit" value="{{ _fsdomain('Sign in with %(provider)s', provider=provider) }}" formaction="{{ url_for_security('oauthstart', name=provider) }}{{ prop_next() }}">
+          {% if csrf_token is defined %}
+            <input id="{{ provider }}_csrf_token" name="{{ provider }}_csrf_token" type="hidden" value="{{ csrf_token() }}">
+          {% endif %}
+        </form>
+      </div>
+    {% endfor %}
+  {% endif %}
+  {% include "security/_menu.html" %}
+{% endblock %}
