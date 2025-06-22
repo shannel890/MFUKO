@@ -2,21 +2,24 @@
 
 from decouple import config
 import os
+from dotenv import load_dotenv
 import secrets # Used to generate a strong random salt
 
+load_dotenv()  # Load environment variables from .env file
+
 class Config:
-    SECRET_KEY = config('SECRET_KEY', default='a_very_secret_key_that_should_be_changed_in_prod')
+    SECRET_KEY = os.getenv('SECRET_KEY')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False # Set to True for debugging SQL queries
 
     # Flask-Security-Too Configuration
     # IMPORTANT: SECURITY_PASSWORD_SALT MUST BE SET AND BE A STRONG, RANDOM STRING IN PRODUCTION
     # The value must be a long, random string. It is critical for secure password hashing.
-    SECURITY_PASSWORD_SALT = config('SECURITY_PASSWORD_SALT') # No default - must be set via environment variable
+    SECURITY_PASSWORD_SALT = os.getenv('SECURITY_PASSWORD_SALT') # No default - must be set via environment variable
     SECURITY_PASSWORD_HASH = "argon2" # Recommended strong hashing algorithm
     
     # Flask-Limiter Configuration
-    RATELIMIT_STORAGE_URL = config('RATELIMIT_STORAGE_URL', default='memory://')
+    RATELIMIT_STORAGE_URL = os.getenv('RATELIMIT_STORAGE_URL')
     RATELIMIT_DEFAULT = "200 per day"
     RATELIMIT_HEADERS_ENABLED = True
 
@@ -25,16 +28,23 @@ class Config:
     SECURITY_SEND_REGISTER_EMAIL = False # Usually False if confirmable is False
     SECURITY_RECOVERABLE = True
     SECURITY_CHANGEABLE = True
+    SECURITY_TRACKABLE = True
+    SECURITY_SEND_REGISTER_EMAIL = False        # Registration confirmation        
+    SECURITY_SEND_PASSWORD_RESET_EMAIL = True  # Password reset instructions      
+    SECURITY_SEND_PASSWORD_CHANGE_EMAIL = True # Password change notifications
     SECURITY_UNIFIED_SIGNIN = False # Allow login with email or username if applicable
     SECURITY_FLASH_MESSAGES = True # Ensure flash messages are enabled
+    SECURITY_POST_REGISTER_VIEW= 'auth.login' # Redirect to login after registration
+    SECURITY_LOGIN_WITHOUT_CONFIRMATION = True # Allow login without email confirmation
 
     # Flask-Mail Configuration (for email notifications)
-    MAIL_SERVER = config('MAIL_SERVER', default='smtp.mailtrap.io') # Or your actual SMTP server
-    MAIL_PORT = config('MAIL_PORT', default=2525, cast=int)
-    MAIL_USE_TLS = config('MAIL_USE_TLS', default=True, cast=bool)
-    MAIL_USERNAME = config('MAIL_USERNAME', default='your_mail_username')
-    MAIL_PASSWORD = config('MAIL_PASSWORD', default='your_mail_password')
-    MAIL_DEFAULT_SENDER = config('MAIL_DEFAULT_SENDER', default='noreply@countyportal.com')
+    MAIL_SERVER = config('MAIL_SERVER', 'smtp.mailtrap.io') # Or your actual SMTP server
+    MAIL_PORT = config('MAIL_PORT', 2525, cast=int)
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes', 'on')                                                                      
+    MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL', 'False').lower() in ('true', '1', 'yes', 'on')
+    MAIL_USERNAME = config('MAIL_USERNAME')
+    MAIL_PASSWORD = config('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = config('MAIL_DEFAULT_SENDER')
 
     # Twilio Configuration (for SMS notifications)
     TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default=None)
@@ -70,7 +80,7 @@ class Config:
 
 
 class DevelopmentConfig(Config):
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///rept_dev.db'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     DEBUG = True
     SQLALCHEMY_ECHO = True
 

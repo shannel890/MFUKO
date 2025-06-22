@@ -13,6 +13,7 @@ roles_users = db.Table('roles_users',
 
 # Role model (unchanged)
 class Role(db.Model, RoleMixin):
+    __tablename__ = 'role'
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
@@ -22,6 +23,7 @@ class Role(db.Model, RoleMixin):
 
 # User model
 class User(db.Model, UserMixin):
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(255), unique=True, nullable=True)
     email = db.Column(db.String(255), unique=True, nullable=False)
@@ -74,6 +76,7 @@ class User(db.Model, UserMixin):
 # The `db.Table` definition above is sufficient.
 
 class County(db.Model):
+    __tablename__ = 'county'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
     active = db.Column(db.Boolean, default=True)
@@ -82,6 +85,7 @@ class County(db.Model):
         return self.name
 
 class Property(db.Model):
+    __tablename__ = 'property'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     address = db.Column(db.String(255), nullable=False)
@@ -99,6 +103,7 @@ class Property(db.Model):
     deposit_policy = db.Column(db.String(255), nullable=True)
 
 class Tenant(db.Model):
+    __tablename__ = 'tenant'
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(100), nullable=False)
     last_name = db.Column(db.String(100), nullable=False)
@@ -121,6 +126,7 @@ class Tenant(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class Payment(db.Model):
+    __tablename__ = 'payment'
     id = db.Column(db.Integer, primary_key=True)
     amount = db.Column(db.Float, nullable=False)
     tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'))
@@ -144,6 +150,7 @@ class Payment(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class AuditLog(db.Model):
+    __tablename__ = 'audit_log'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     action = db.Column(db.String(100), nullable=False)
@@ -162,6 +169,7 @@ class AuditLog(db.Model):
         return f'<AuditLog {self.action} by {self.user_id} at {self.timestamp}>'
 
 class NotificationTemplate(db.Model):
+    __tablename__ = 'notification_template'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     type = db.Column(db.String(20), nullable=False)  # 'sms' or 'email'
@@ -174,6 +182,7 @@ class NotificationTemplate(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class Notification(db.Model):
+    __tablename__ = 'notification'
     id = db.Column(db.Integer, primary_key=True)
     template_id = db.Column(db.Integer, db.ForeignKey('notification_template.id'))
     recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -188,6 +197,7 @@ class Notification(db.Model):
     recipient = db.relationship('User', backref=db.backref('notifications', lazy=True))
 
 class MpesaTransaction(db.Model):
+    __tablename__ = 'mpesa_transaction'
     id = db.Column(db.Integer, primary_key=True)
     payment_id = db.Column(db.Integer, db.ForeignKey('payment.id'), nullable=True)
     merchant_request_id = db.Column(db.String(100), unique=True)
@@ -207,6 +217,7 @@ class MpesaTransaction(db.Model):
 
 # Update Payment model with offline sync fields
 class OfflinePayment(db.Model):
+    __tablename__ = 'offline_payment'
     id = db.Column(db.Integer, primary_key=True)
     payment_id = db.Column(db.Integer, db.ForeignKey('payment.id'))
     local_reference = db.Column(db.String(100), nullable=False)

@@ -4,12 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}REPT{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    {% block head %}{% endblock %}
+
+    <style>
+        /* Light blue background for auth pages */
+        body.auth-page {
+            background-color: #43d7eb;
+        }
+        
+        /* Center content vertically on auth pages */
+        body.auth-page main {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 120px); /* Account for navbar and footer */
+        }
+    </style>
+
+    {% block head %}{% endblock %} {# Placeholder for additional head content from child templates #}
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+<body class="{{ 'auth-page' if request.endpoint and request.endpoint.startswith('security.') else '' }}">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top"> {# Added sticky-top for a better UX #}
         <div class="container-fluid">
             <a class="navbar-brand fw-bold text-primary" href="{{ url_for('main.index') }}">REPT</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -17,29 +35,72 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    {# Use current_user.is_authenticated to determine navigation #}
                     {% if current_user.is_authenticated %}
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.dashboard') }}">{{ _('Dashboard') }}</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.properties_list') }}">{{ _('Properties') }}</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.tenants_list') }}">{{ _('Tenants') }}</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.payments_history') }}">{{ _('Payments') }}</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.reports') }}">{{ _('Reports') }}</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.audit_trail') }}">{{ _('Audit Trail') }}</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.logout') }}">{{ _('Logout') }}</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'main.dashboard' %}active{% endif %}" aria-current="{% if request.endpoint == 'main.dashboard' %}page{% endif %}" href="{{ url_for('dashboard') }}">{{ ('Dashboard') }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'main.properties_list' %}active{% endif %}" aria-current="{% if request.endpoint == 'main.properties_list' %}page{% endif %}" href="{{ url_for('properties_list') }}">{{ ('Properties') }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'main.tenants_list' %}active{% endif %}" aria-current="{% if request.endpoint == 'main.tenants_list' %}page{% endif %}" href="{{ url_for('tenants_list') }}">{{ ('Tenants') }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'main.payments_history' %}active{% endif %}" aria-current="{% if request.endpoint == 'main.payments_history' %}page{% endif %}" href="{{ url_for('payments_history') }}">{{ ('Payments') }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'main.reports' %}active{% endif %}" aria-current="{% if request.endpoint == 'main.reports' %}page{% endif %}" href="{{ url_for('reports') }}">{{ ('Reports') }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'main.audit_trail' %}active{% endif %}" aria-current="{% if request.endpoint == 'main.audit_trail' %}page{% endif %}" href="{{ url_for('audit_trail') }}">{{ ('Audit Trail') }}</a>
+                        </li>
+                        {# Use Flask-Security-Too's logout route if that's what you're using #}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('security.logout') }}">{{ ('Logout') }}</a>
+                        </li>
                     {% else %}
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}">{{ _('Login') }}</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.register') }}">{{ _('Register') }}</a></li>
+                        <li class="nav-item">
+                            {# Use Flask-Security-Too's login route #}
+                            <a class="nav-link {% if request.endpoint == 'security.login' or request.endpoint == 'auth_ext.login' %}active{% endif %}" aria-current="{% if request.endpoint == 'security.login' or request.endpoint == 'auth_ext.login' %}page{% endif %}" href="{{ url_for('fs_auth.login') }}">{{ ('Login') }}</a>
+                        </li>
+                        <li class="nav-item">
+                            {# Use Flask-Security-Too's register route #}
+                            <a class="nav-link {% if request.endpoint == 'security.register' or request.endpoint == 'auth_ext.register' %}active{% endif %}" aria-current="{% if request.endpoint == 'security.register' or request.endpoint == 'auth_ext.register' %}page{% endif %}" href="{{ url_for('main.register') }}">{{ ('Register') }}</a>
+                        </li>
                     {% endif %}
                 </ul>
             </div>
         </div>
     </nav>
+
     <main class="container my-4">
-        {% block content %}{% endblock %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="row">
+                    <div class="col-md-10 offset-md-1">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %} {# Main content block for child templates #}
     </main>
-    <footer class="text-center py-3 text-muted small">
-        &copy; {{ now().year }} REPT Kenya
+
+    <footer class="text-center py-3 text-muted small mt-5"> {# Added mt-5 for some margin #}
+        {# Using `now().year` implies `now` is available in context, or you pass `current_year` #}
+        
+        {# A safer way is to pass current_year from your view function, e.g., render_template('base.html', current_year=datetime.now().year) #}
     </footer>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    {% block scripts %}{% endblock %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    
+    {% block scripts %}{% endblock %} {# Placeholder for additional JavaScript from child templates #}
 </body>
 </html>

@@ -1,12 +1,17 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
-from flask_security import current_user, roles_accepted, login_required
+from flask_login import current_user, login_required
+from flask_security import roles_accepted
 from flask_babel import gettext as _
-
-from forms import ExtendedLoginForm, ExtendRegisterForm
 from app.models import User, Role
-from extension import user_datastore,db
+from extension import user_datastore, db
+from forms import RegisterForm
+from flask import flash, url_for, redirect
+
+
 
 auth = Blueprint('auth_ext', __name__)
+
+
 
 @auth.after_request
 def add_security_headers(response):

@@ -1,5 +1,5 @@
 from flask import Flask, request, render_template, g
-from flask_security import SQLAlchemySessionUserDatastore
+from flask_security import Security, SQLAlchemySessionUserDatastore, registerable
 from flask_babel import _, lazy_gettext as _l
 from flask_login import current_user
 import os
@@ -27,7 +27,7 @@ from app.tasks import (
 # Import configuration and extensions
 from config import config_options
 from extension import db, login_manager, security, csrf, mail, babel, scheduler, limiter, migrate, user_datastore
-from forms import ExtendRegisterForm, ExtendedLoginForm  # Import your custom forms
+from forms import RegistrationForm, ExtendedLoginForm  # Import your custom forms
 
 def create_app(config_name='development'):
     """
@@ -53,6 +53,9 @@ def create_app(config_name='development'):
     app.config['SECURITY_LOGOUT_URL'] = '/logout'
     app.config['SECURITY_POST_LOGIN_VIEW'] = '/dashboard'
     app.config['SECURITY_POST_REGISTER_VIEW'] = '/dashboard'
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://user:password@db:5432/dbname')
 
     # Initialize core extensions with the Flask app
     db.init_app(app)
@@ -97,32 +100,33 @@ def create_app(config_name='development'):
     # User loader for Flask-Login (used by Flask-Security-Too)
     @login_manager.user_loader
     def load_user(user_id):
-        from .models import User  # Import User model here to avoid circular imports
+        from app.models import User  # Import User model here to avoid circular imports
         return User.query.get(int(user_id))
+    
 
     # Set up Flask-Babel locale selector function
     def get_locale():
-        # 1. Try language from URL argument (e.g., /en/dashboard) - not implemented in routes yet
-        # lang = request.args.get('lang_code')
-        # if lang:
-        #     return lang
+         # 1. Try language from URL argument (e.g., /en/dashboard) - not implemented in routes yet
+         lang = request.args.get('lang_code')
+         if lang:
+             return lang
         
         # 2. Try language from cookie
-        lang = request.cookies.get('lang')
-        if lang in app.config['LANGUAGES']:
+         lang = request.cookies.get('lang')
+         if lang in app.config['LANGUAGES']:
             return lang
 
         # 3. Try language from authenticated user's preferences (if User model has 'language' field)
-        if current_user.is_authenticated and hasattr(current_user, 'language') and current_user.language:
+         if current_user.is_authenticated and hasattr(current_user, 'language') and current_user.language:
             return current_user.language
         
         # 4. Fallback to browser's accepted languages
-        return request.accept_languages.best_match(app.config['LANGUAGES']) or app.config['BABEL_DEFAULT_LOCALE']
+         return request.accept_languages.best_match(app.config['LANGUAGES']) or app.config['BABEL_DEFAULT_LOCALE']
     
     babel.locale_selector_func = get_locale
 
     # Import User and Role models outside the app_context block but inside create_app
-    from .models import User, Role
+    from app.models import User, Role
 
     with app.app_context():
         # Create database tables (only if they don't exist)
@@ -132,12 +136,19 @@ def create_app(config_name='development'):
         user_datastore.init_datastore(db.session, User, Role)
         
         # Initialize Flask-Security with a SINGLE init_app call
-        security.init_app(
-            app,
-            user_datastore,
-            register_form=ExtendRegisterForm,
-            login_form=ExtendedLoginForm
-        )
+        security.init_app(app, user_datastore,
+                      register_form=RegistrationForm, # This tells FST to use your form
+                      registerable=True, # THIS MUST BE TRUE for FST to handle registration
+                      # ... other FST configs like confirmable, trackable, etc.
+
+                      # Crucial for redirection after successful registration
+                      post_register_view='security.login', # Redirects to FST's login page
+                      # OR 'main.dashboard' if you want to redirect to a dashboard after register
+                      flash_messages=True # Recommended to display FST's internal flash messages
+                     )
+        
+        from app.auth import auth as auth_bp
+        app.register_blueprint(auth_bp, url_prefix='/auth')
 
         # Create default roles if they don't exist
         if not user_datastore.find_role('landlord'):
@@ -149,7 +160,7 @@ def create_app(config_name='development'):
         db.session.commit()  # Commit role creation
 
     # Register Blueprints
-    from .routes import main as main_blueprint
+    from app.routes import main as main_blueprint
     app.register_blueprint(main_blueprint)
 
     # Initialize and configure APScheduler

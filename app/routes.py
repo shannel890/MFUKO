@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from flask_security import roles_required # For role-based access control
 from app.models import User, Property, Tenant, Payment, County, AuditLog
 # Assuming forms are defined in app/forms.py (using relative import)
-from forms import ExtendRegisterForm, ExtendedLoginForm, UserProfileForm, PropertyForm, TenantForm, RecordPaymentForm
+from forms import RegistrationForm, ExtendedLoginForm, UserProfileForm, PropertyForm, TenantForm, RecordPaymentForm
 from datetime import datetime, timedelta
 from sqlalchemy import func, and_
 import json
@@ -21,6 +21,48 @@ def index():
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
     return render_template('index.html', now=datetime.now())
+# --- Register Page ---
+@main.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegistrationForm()
+    
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+        
+    if form.validate_on_submit():  # Use WTForms validation
+        username = form.username.data
+        email = form.email.data
+        password = form.password.data
+
+        # Check if username or email already exists
+        if User.query.filter_by(username=username).first():
+            flash('Username already exists.', 'error')
+            return render_template('register_user.html', form=form)
+            
+        if User.query.filter_by(email=email).first():
+            flash('Email already registered.', 'error')
+            return render_template('register_user.html', form=form)
+
+        # Create new user
+        user = User(
+            username=username,
+            email=email,
+            first_name=form.first_name.data,
+            last_name=form.last_name.data,
+            phone_number=form.phone_number.data
+        )
+        user.set_password(password)
+        
+        try:
+            db.session.add(user)
+            db.session.commit()
+            flash('Registration successful! Please login.', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            db.session.rollback()
+            flash('An error occurred. Please try again.', 'error')
+
+    return render_template('register_user.html', form=form)
 
 @main.route('/dashboard')
 @login_required

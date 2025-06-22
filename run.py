@@ -13,7 +13,7 @@ app = create_app(os.getenv('FLASK_CONFIG', 'development'))
 # Flask shell context (optional, but very useful for development)
 @app.shell_context_processor
 def make_shell_context():
-    return dict(db=db, User=User, Role=Role, County=County,
+    return dict( User=User, Role=Role, County=County,
                 Property=Property, Tenant=Tenant, Payment=Payment, AuditLog=AuditLog)
 
 if __name__ == '__main__':
