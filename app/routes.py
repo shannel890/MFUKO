@@ -39,10 +39,7 @@ def register():
             flash('Username already exists.', 'error')
             return render_template('register_user.html', form=form)
             
-        if User.query.filter_by(email=email).first():
-            flash('Email already registered.', 'error')
-            return render_template('register_user.html', form=form)
-
+    
         # Create new user
         user = User(
             username=username,
@@ -65,7 +62,6 @@ def register():
     return render_template('register_user.html', form=form)
 
 @main.route('/dashboard')
-@login_required
 @roles_required('landlord')
 def dashboard():
     """
