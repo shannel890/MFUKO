@@ -93,7 +93,14 @@
                 <img src="https://media.istockphoto.com/id/1274394138/photo/man-using-mobile-smart-phone-with-global-network-connection-technology-innovative-and.jpg?s=612x612&w=0&k=20&c=6ln2G2Go386vrXHSbggHNbaQJlywS8mUCoF-rBBwdBc=" alt="REPT Logo">
                 <div class="brand mb-2">{{ _('Real Estate Payment Tracker') }}</div>
                 <p class="lead mb-4">{{ _('Effortlessly track rent, automate M-Pesa payments, and manage your properties in Kenya. Simple for everyone, powerful for landlords.') }}</p>
-                <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg shadow-sm">{{ _('Go to Dashboard') }}</a>
+                 <div class="d-flex gap-3 justify-content-center">
+                        <a href="{{ url_for('fs_auth.login') }}" class="btn btn-primary btn-lg px-4">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a>
+                        <a href="{{ url_for('fs_auth.register') }}" class="btn btn-info btn-lg px-4">
+                            <i class="fas fa-user-plus me-2"></i>Register
+                        </a>
+                    </div>
                 <div class="mt-4">
                     <small class="text-muted">{{ _('Available in English & Kiswahili') }}</small>
                 </div>

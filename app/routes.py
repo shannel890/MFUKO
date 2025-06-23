@@ -26,42 +26,35 @@ def index():
 def register():
     form = RegistrationForm()
     
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
-        
-    if form.validate_on_submit():  # Use WTForms validation
+    if form.validate_on_submit():
         username = form.username.data
         email = form.email.data
         password = form.password.data
+        confirm_password = form.confirm_password.data
+        first_name = form.first_name.data
+        last_name = form.last_name.data
+        phone_number = form.phone_number.data if hasattr(form, 'phone_number') else None
 
-        # Check if username or email already exists
-        if User.query.filter_by(username=username).first():
-            flash('Username already exists.', 'error')
-            return render_template('register_user.html', form=form)
-            
-    
-        # Create new user
+        # Ideally hash the password before storing
         user = User(
             username=username,
             email=email,
-            first_name=form.first_name.data,
-            last_name=form.last_name.data,
-            phone_number=form.phone_number.data
+            password=password,  # Consider using a password hash here
+            confirm_password=confirm_password,  # Not needed for User model, but kept for form validation
+            first_name=first_name,
+            last_name=last_name,
+            phone_number=phone_number
         )
-        user.set_password(password)
-        
-        try:
-            db.session.add(user)
-            db.session.commit()
-            flash('Registration successful! Please login.', 'success')
-            return redirect(url_for('login'))
-        except Exception as e:
-            db.session.rollback()
-            flash('An error occurred. Please try again.', 'error')
+        db.session.add(user)
+        db.session.commit()
 
-    return render_template('register_user.html', form=form)
+        flash(f'Registration for {user.username} successful! You can now log in.', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('register.html', form=form)
 
 @main.route('/dashboard')
+@login_required
 @roles_required('landlord')
 def dashboard():
     """

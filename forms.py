@@ -20,32 +20,38 @@ from wtforms.validators import (
     NumberRange,
     Optional,
     ValidationError,
+    EqualTo, # Custom validator for phone numbers
     Regexp # For more specific pattern matching if needed
 )
 from flask_security import  LoginForm, RegisterForm
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Length, Email, EqualTo
+from flask_babel import lazy_gettext as _l
 
 class RegistrationForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired(), Length(min=2, max=20)])
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
-    first_name = StringField('First Name')
-    last_name = StringField('Last Name')
-    phone_number = StringField('Phone Number')
-    submit = SubmitField('Register')
+    username = StringField(_l('Username'), validators=[
+        DataRequired(), Length(min=2, max=20)
+    ])
+    email = StringField(_l('Email'), validators=[
+        DataRequired(), Email()
+    ])
+    password = PasswordField(_l('Password'), validators=[
+        DataRequired()
+    ])
+    confirm_password = PasswordField(_l('Confirm Password'), validators=[
+        DataRequired(), EqualTo('password', message=_l('Passwords must match.'))
+    ])
+    first_name = StringField(_l('First Name'))
+    last_name = StringField(_l('Last Name'))
+    phone_number = StringField(_l('Phone Number'))
+    county_id = SelectField(_l('County'), coerce=int, validators=[DataRequired()])
+    submit = SubmitField(_l('Register'))
 
-# Ensure these imports are correct for Flask-Security's forms
-from flask_security.forms import  LoginForm
-from flask_babel import lazy_gettext as _l # For multi-language support
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from app.models import County  # import here to avoid circular imports
+        self.county_id.choices = [(c.id, c.name) for c in County.query.order_by(County.name).all()]
 
-# Import your database models for dynamic choices.
-# It's generally better to import these at the top level
-# if `db` is initialized early in `app/__init__.py`.
-# The `try-except` block for fallbacks remains useful if you foresee
-# scenarios where models might not be fully loaded/accessible during initial forms.py import.
+
 try:
     from app.models import County, Property, Tenant
 except ImportError:

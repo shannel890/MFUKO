@@ -1,73 +1,175 @@
+{% extends "base.html" %}
 
-{% extends "base.html"%}
-{% set title = title|default(_fsdomain('Login')) %}
+    {% block title %}Sign In - real estate services{% endblock %}
 
-{% from "security/_macros.html" import render_field_with_errors, render_field, render_field_errors, render_form_errors, prop_next %}
-<style>
-        body {
-            background-color: #4ee0f3; /* Light blue color */
-            display: flex; /* Use flexbox for centering */
-            justify-content: center; /* Center horizontally */
-            align-items: center; /* Center vertically */
-            min-height: 100vh; /* Ensure it takes full viewport height */
-            margin: 0; /* Remove default body margin */
-            font-family: 'Inter', sans-serif; /* Recommended modern font */
-        }
-        .card {
-            max-width: 500px; /* Limit card width for better appearance */
-            width: 100%; /* Make card responsive */
-            border-radius: 1rem; /* Rounded corners for elegance */
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important; /* Enhanced shadow */
-        }
-        .btn-primary {
-            background-color: #007bff; /* Standard primary blue */
-            border-color: #007bff;
-            font-weight: 600;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-            border-color: #004085;
-        }
-    </style>
-{% block content %}
-  {% include "security/_messages.html" %}
-  <h1>{{ _fsdomain('Login') }}</h1>
-  <form action="{{ url_for_security('login') }}{{ prop_next() }}" method="post" name="login_user_form">
-    {{ login_user_form.hidden_tag() }}
-    {{ render_form_errors(login_user_form) }}
-    {% if login_user_form.email and "email" in identity_attributes %}
-      {{ render_field_with_errors(login_user_form.email) }}{% endif %}
-    {% if login_user_form.username and "username" in identity_attributes %}
-      {% if login_user_form.email and "email" in identity_attributes %}<h3>{{ _fsdomain("or") }}</h3>{% endif %}
-      {{ render_field_with_errors(login_user_form.username) }}
-    {% endif %}
-    <div class="fs-gap">{{ render_field_with_errors(login_user_form.password) }}</div>
-    {{ render_field_with_errors(login_user_form.remember) }}
-    {{ render_field_errors(login_user_form.csrf_token) }}
-    {{ render_field(login_user_form.submit) }}
-  </form>
-  {% if security.webauthn %}
-    <hr class="fs-gap">
-    <h2>{{ _fsdomain("Use WebAuthn to Sign In") }}</h2>
-    <div>
-      <form method="get" id="wan_signin_form" name="wan_signin_form">
-        <input id="wan_signin" name="wan_signin" type="submit" value="{{ _fsdomain('Sign in with WebAuthn') }}" formaction="{{ url_for_security('wan_signin') }}{{ prop_next() }}">
-      </form>
+    {% block content %}
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <i class="fas fa-sign-in-alt fa-2x mb-3"></i>
+                <h1>Welcome Back</h1>
+                <p>Sign in to access our payment services</p>
+            </div>
+
+            <div class="auth-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            {# Map categories to Bootstrap alert types, including default 'info' and custom icon #}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button> {# Added aria-label for accessibility #}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {# Add 'needs-validation' class for Bootstrap's client-side validation #}
+                <form method="POST" action="{{ url_for_security('login') }}" class="needs-validation" novalidate>
+                    {{ login_user_form.hidden_tag() }}
+
+                    <div class="form-floating mb-3"> {# Added mb-3 for consistent spacing #}
+                        {# Removed autofocus attribute from template; will handle via JS for better control #}
+                        {# Added 'required' attribute for HTML5 validation #}
+                        {{ login_user_form.email(class="form-control form-control-lg" + (" is-invalid" if login_user_form.email.errors else ""), placeholder="name@example.com", required=true) }}
+                        {{ login_user_form.email.label(class="form-label") }}
+                        {% if login_user_form.email.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in login_user_form.email.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-floating mb-3"> {# Added mb-3 for consistent spacing #}
+                        {# Added 'required' attribute for HTML5 validation and autocomplete #}
+                        {{ login_user_form.password(class="form-control form-control-lg" + (" is-invalid" if login_user_form.password.errors else ""), placeholder="Password", required=true, autocomplete="current-password") }}
+                        {{ login_user_form.password.label(class="form-label") }}
+                        {% if login_user_form.password.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in login_user_form.password.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {# Placeholder for Caps Lock warning, populated by JS #}
+                        <div id="caps-warning-container"></div>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        {{ login_user_form.remember(class="form-check-input") }}
+                        {{ login_user_form.remember.label(class="form-check-label") }}
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        {{ login_user_form.submit(class="btn btn-primary btn-lg") }}
+                    </div>
+                </form>
+
+                <div class="footer-links">
+                    <a href="{{ url_for_security('forgot_password') }}">
+                        <i class="fas fa-key me-1"></i>
+                        Forgot Password?
+                    </a>
+                    <span class="text-muted mx-2">|</span> {# Using a span for separator for semantic clarity #}
+                    <a href="{{ url_for_security('register') }}">
+                        <i class="fas fa-user-plus me-1"></i>
+                        Create Account
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
-  {% endif %}
-  {% if security.oauthglue %}
-    <hr class="fs-gap">
-    <h2>{{ _fsdomain("Use Social Oauth to Sign In") }}</h2>
-    {% for provider in security.oauthglue.provider_names %}
-      <div class="fs-gap">
-        <form method="post" id="{{ provider }}_form" name="{{ provider }}_form">
-          <input id="{{ provider }}" name="{{ provider }}" type="submit" value="{{ _fsdomain('Sign in with %(provider)s', provider=provider) }}" formaction="{{ url_for_security('oauthstart', name=provider) }}{{ prop_next() }}">
-          {% if csrf_token is defined %}
-            <input id="{{ provider }}_csrf_token" name="{{ provider }}_csrf_token" type="hidden" value="{{ csrf_token() }}">
-          {% endif %}
-        </form>
-      </div>
-    {% endfor %}
-  {% endif %}
-  {% include "security/_menu.html" %}
-{% endblock %}
+    {% endblock %}
+
+    {% block extra_js %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form.needs-validation');
+        const emailField = document.getElementById('email');
+        const passwordField = document.getElementById('password');
+        const capsWarningContainer = document.getElementById('caps-warning-container');
+
+        // --- Bootstrap Client-Side Validation on Submit ---
+        if (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) { // Check HTML5 validity
+                    event.preventDefault(); // Stop submission if invalid
+                    event.stopPropagation(); // Prevent event bubbling
+
+                    // Scroll to and focus the first invalid field
+                    const firstInvalid = form.querySelector('.is-invalid');
+                    if (firstInvalid) {
+                        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstInvalid.focus();
+                    }
+                }
+                form.classList.add('was-validated'); // Apply Bootstrap validation styles
+            }, false);
+
+            // --- Real-time Validation Feedback for Email and Password ---
+            // Listener for input events on email and password fields
+            form.querySelectorAll('#email, #password').forEach(field => {
+                field.addEventListener('input', function() {
+                    this.classList.remove('is-valid', 'is-invalid'); // Clear existing states
+                    if (this.checkValidity()) {
+                        this.classList.add('is-valid');
+                    } else {
+                        // Only add is-invalid if the form has been validated (submitted)
+                        // or if the field was already marked invalid by server-side errors
+                        if (form.classList.contains('was-validated') || this.classList.contains('is-invalid')) {
+                            this.classList.add('is-invalid');
+                        }
+                    }
+                });
+            });
+        }
+
+        // --- Auto-focus Email Field ---
+        // Ensure email field has focus when page loads, overriding template's autofocus
+        if (emailField) {
+            emailField.focus();
+        }
+
+        // --- Caps Lock Detection for Password Field ---
+        if (passwordField) {
+            passwordField.addEventListener('keydown', function(e) {
+                const capsLock = e.getModifierState && e.getModifierState('CapsLock');
+
+                // Clear any existing warning before re-evaluating
+                const existingWarning = document.getElementById('caps-warning');
+                if (existingWarning) {
+                    existingWarning.remove();
+                }
+
+                if (capsLock) {
+                    const warningDiv = document.createElement('div');
+                    warningDiv.id = 'caps-warning';
+                    warningDiv.className = 'alert alert-warning alert-sm mt-2';
+                    warningDiv.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i> Caps Lock is on.';
+                    capsWarningContainer.appendChild(warningDiv); // Append to the dedicated container
+                }
+            });
+
+            // Remove caps lock warning on keyup (after the key is released)
+            // or when the field loses focus, as the state might change.
+            passwordField.addEventListener('keyup', function(e) {
+                const capsLock = e.getModifierState && e.getModifierState('CapsLock');
+                const warning = document.getElementById('caps-warning');
+                if (!capsLock && warning) { // If Caps Lock is now off and warning exists
+                    warning.remove();
+                }
+            });
+
+            passwordField.addEventListener('blur', function() {
+                const warning = document.getElementById('caps-warning');
+                if (warning) {
+                    warning.remove(); // Remove warning when field loses focus
+                }
+            });
+        }
+    });
+    </script>
+    {% endblock %}
