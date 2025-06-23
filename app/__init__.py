@@ -27,7 +27,7 @@ from app.tasks import (
 # Import configuration and extensions
 from config import config_options
 from extension import db, login_manager, security, csrf, mail, babel, scheduler, limiter, migrate, user_datastore
-from forms import RegistrationForm, ExtendedLoginForm  # Import your custom forms
+from forms import ExtendedRegisterForm
 
 def create_app(config_name='development'):
     """
@@ -137,7 +137,7 @@ def create_app(config_name='development'):
         
         # Initialize Flask-Security with a SINGLE init_app call
         security.init_app(app, user_datastore,
-                      register_form=RegistrationForm, # This tells FST to use your form
+                      register_form=ExtendedRegisterForm,
                       registerable=True, # THIS MUST BE TRUE for FST to handle registration
                       # ... other FST configs like confirmable, trackable, etc.
 
@@ -149,6 +149,13 @@ def create_app(config_name='development'):
         
         from app.auth import auth as auth_bp
         app.register_blueprint(auth_bp, url_prefix='/auth')
+        import uuid
+
+        def create_user(**kwargs):
+            kwargs['fs_uniquifier'] = str(uuid.uuid4())
+            user = user_datastore.create_user(**kwargs)
+            db.session.commit()
+            return user
 
         # Create default roles if they don't exist
         if not user_datastore.find_role('landlord'):

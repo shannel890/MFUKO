@@ -27,25 +27,14 @@ from flask_security import  LoginForm, RegisterForm
 from flask_wtf import FlaskForm
 from flask_babel import lazy_gettext as _l
 
-class RegistrationForm(FlaskForm):
-    username = StringField(_l('Username'), validators=[
-        DataRequired(), Length(min=2, max=20)
-    ])
-    email = StringField(_l('Email'), validators=[
-        DataRequired(), Email()
-    ])
-    password = PasswordField(_l('Password'), validators=[
-        DataRequired()
-    ])
-    confirm_password = PasswordField(_l('Confirm Password'), validators=[
-        DataRequired(), EqualTo('password', message=_l('Passwords must match.'))
-    ])
-    first_name = StringField(_l('First Name'))
-    last_name = StringField(_l('Last Name'))
-    phone_number = StringField(_l('Phone Number'))
-    county_id = SelectField(_l('County'), coerce=int, validators=[DataRequired()])
-    submit = SubmitField(_l('Register'))
+class ExtendedRegisterForm(RegisterForm):
+    username = StringField('Username', validators=[DataRequired(), Length(min=3, max=50)])
+    first_name = StringField('First Name', validators=[DataRequired(), Length(max=50)])
+    last_name = StringField('Last Name', validators=[DataRequired(), Length(max=50)])
+    phone_number = StringField('Phone Number', validators=[Length(max=15)])
+    county_id = SelectField('County', coerce=int, validators=[DataRequired()])
 
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         from app.models import County  # import here to avoid circular imports

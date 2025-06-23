@@ -36,6 +36,7 @@ class Config:
     SECURITY_FLASH_MESSAGES = True # Ensure flash messages are enabled
     SECURITY_POST_REGISTER_VIEW= 'auth.login' # Redirect to login after registration
     SECURITY_LOGIN_WITHOUT_CONFIRMATION = True # Allow login without email confirmation
+    SECURITY_BLUEPRINT_NAME = 'fs_auth'
 
     # Flask-Mail Configuration (for email notifications)
     MAIL_SERVER = config('MAIL_SERVER', 'smtp.mailtrap.io') # Or your actual SMTP server

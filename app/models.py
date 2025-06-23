@@ -4,76 +4,31 @@ from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
 from extension import db # Corrected import assuming db is initialized in app/__init__.py or a similar structure
 
-# Define the many-to-many relationship table for users and roles
-# THIS IS THE CORRECT AND ONLY DEFINITION NEEDED FOR roles_users
 roles_users = db.Table('roles_users',
     db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
     db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
 )
 
-# Role model (unchanged)
 class Role(db.Model, RoleMixin):
-    __tablename__ = 'role'
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
 
-    def __str__(self):
-        return self.name
-
-# User model
 class User(db.Model, UserMixin):
-    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(255), unique=True, nullable=True)
     email = db.Column(db.String(255), unique=True, nullable=False)
+    username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
+    first_name = db.Column(db.String(50))
+    last_name = db.Column(db.String(50))
+    phone_number = db.Column(db.String(15))
+    county_id = db.Column(db.Integer, db.ForeignKey('county.id'))
     active = db.Column(db.Boolean(), default=True)
-    fs_uniquifier = db.Column(db.String(255), unique=True, nullable=False)
-    confirmed_at = db.Column(db.DateTime())
+    fs_uniquifier = db.Column(db.String(64), unique=True, nullable=False)
+    roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
 
-    # --- Flask-Security-Too User Tracking Fields (MUST BE PRESENT) ---
-    last_login_at = db.Column(db.DateTime())
-    current_login_at = db.Column(db.DateTime())
-    last_login_ip = db.Column(db.String(100))
-    current_login_ip = db.Column(db.String(100))
-    login_count = db.Column(db.Integer)
-    # --- End Flask-Security-Too Fields ---
-
-    # Your custom fields
-    first_name = db.Column(db.String(255), nullable=True)
-    last_name = db.Column(db.String(255), nullable=True)
-    phone_number = db.Column(db.String(20), unique=True, nullable=True)
-    county_id = db.Column(db.Integer, db.ForeignKey('county.id'), nullable=True)
-    language = db.Column(db.String(5), default='en')
-    notification_preferences = db.Column(JSONB, nullable=True)
-
-    # Relationships
-    roles = db.relationship('Role', secondary=roles_users,
-                            backref=db.backref('users', lazy='dynamic'))
-    county = db.relationship('County', backref='users', lazy=True)
-
-    def __str__(self):
-        return self.email
-
-    def has_role(self, role):
-        """Check if user has the specified role."""
-        return any(r.name == role for r in self.roles)
-
-    @property
     def full_name(self):
-        """Return user's full name."""
         return f"{self.first_name} {self.last_name}"
-
-# --- DELETED: The redundant RolesUsers(db.Model) class definition ---
-# You had:
-# class RolesUsers(db.Model):
-#     __tablename__ = 'roles_users'
-#     id = db.Column(db.Integer(), primary_key=True)
-#     user_id = db.Column('user_id', db.Integer(), db.ForeignKey('user.id'))
-#     role_id = db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
-# This class was causing the "Table 'roles_users' is already defined" error.
-# The `db.Table` definition above is sufficient.
 
 class County(db.Model):
     __tablename__ = 'county'

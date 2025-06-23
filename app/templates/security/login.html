@@ -28,6 +28,7 @@
                 {# Add 'needs-validation' class for Bootstrap's client-side validation #}
                 <form method="POST" action="{{ url_for_security('login') }}" class="needs-validation" novalidate>
                     {{ login_user_form.hidden_tag() }}
+                   
 
                     <div class="form-floating mb-3"> {# Added mb-3 for consistent spacing #}
                         {# Removed autofocus attribute from template; will handle via JS for better control #}

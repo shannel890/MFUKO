@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from flask_security import roles_required # For role-based access control
 from app.models import User, Property, Tenant, Payment, County, AuditLog
 # Assuming forms are defined in app/forms.py (using relative import)
-from forms import RegistrationForm, ExtendedLoginForm, UserProfileForm, PropertyForm, TenantForm, RecordPaymentForm
+from forms import  PropertyForm, TenantForm, RecordPaymentForm
 from datetime import datetime, timedelta
 from sqlalchemy import func, and_
 import json
@@ -21,43 +21,8 @@ def index():
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
     return render_template('index.html', now=datetime.now())
-# --- Register Page ---
-from werkzeug.security import generate_password_hash # Import for hashing passwords
 
-@main.route('/register', methods=['GET', 'POST'])
-def register():
-    form = RegistrationForm()
 
-    if form.validate_on_submit():
-        username = form.username.data
-        email = form.email.data
-        password = form.password.data # This is the plain text password from the form
-        first_name = form.first_name.data
-        last_name = form.last_name.data
-        # Safely get optional fields
-        phone_number = form.phone_number.data if hasattr(form, 'phone_number') and form.phone_number.data else None
-        county_id = form.county_id.data if hasattr(form, 'county_id') and form.county_id.data else None
-
-        # Hash the password before creating the User object
-        hashed_password = generate_password_hash(password)
-
-        user = User(
-            username=username,
-            email=email,
-            password_hash=hashed_password, # Store the hashed password
-            first_name=first_name,
-            last_name=last_name,
-            phone_number=phone_number,
-            county_id=county_id
-        )
-        db.session.add(user)
-        db.session.commit() # Commit only if validation is successful
-
-        flash(f'Registration for {user.username} successful! You can now log in.', 'success')
-        return redirect(url_for('main.login')) # Redirect to login page upon success
-
-    # If GET request or form validation fails, render the template
-    return render_template('register.html', form=form)
 
 @main.route('/dashboard')
 @login_required
