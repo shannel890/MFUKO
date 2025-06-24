@@ -1,4 +1,4 @@
-# from flask_login import UserMixin  <-- REMOVED: Replaced with Flask-Security's UserMixin
+# from  import UserMixin  <-- REMOVED: Replaced with Flask-Security's UserMixin
 from flask_security import UserMixin, RoleMixin # Corrected import for UserMixin
 from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime

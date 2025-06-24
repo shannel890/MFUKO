@@ -23,7 +23,7 @@ from wtforms.validators import (
     EqualTo, # Custom validator for phone numbers
     Regexp # For more specific pattern matching if needed
 )
-from flask_security import  LoginForm, RegisterForm
+from flask_security.forms import  LoginForm, RegisterForm
 from flask_wtf import FlaskForm
 from flask_babel import lazy_gettext as _l
 
@@ -33,7 +33,9 @@ class ExtendedRegisterForm(RegisterForm):
     last_name = StringField('Last Name', validators=[DataRequired(), Length(max=50)])
     phone_number = StringField('Phone Number', validators=[Length(max=15)])
     county_id = SelectField('County', coerce=int, validators=[DataRequired()])
-
+    password = PasswordField('Password', validators=[DataRequired()])
+   
+    submit = SubmitField(_l('Register'))
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -350,7 +352,7 @@ class TenantForm(FlaskForm):
         super().__init__(*args, **kwargs)
         # Populate property choices dynamically for landlord
         try:
-            from flask_login import current_user
+            from flask_security import current_user
             from app import db # Import db here
             from app.models import Property # Import Property model here
 
@@ -449,7 +451,7 @@ class RecordPaymentForm(FlaskForm):
         super().__init__(*args, **kwargs)
         # Populate tenant choices dynamically for landlord
         try:
-            from flask_login import current_user
+            from flask_security import current_user
             from app import db
             from app.models import Property, Tenant
 

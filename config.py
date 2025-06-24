@@ -35,7 +35,6 @@ class Config:
     SECURITY_UNIFIED_SIGNIN = False # Allow login with email or username if applicable
     SECURITY_FLASH_MESSAGES = True # Ensure flash messages are enabled
     SECURITY_POST_REGISTER_VIEW= 'auth.login' # Redirect to login after registration
-    SECURITY_LOGIN_WITHOUT_CONFIRMATION = True # Allow login without email confirmation
     SECURITY_BLUEPRINT_NAME = 'fs_auth'
 
     # Flask-Mail Configuration (for email notifications)

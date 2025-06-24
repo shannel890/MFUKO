@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
-from flask_login import login_required, current_user
-from flask_security import roles_required # For role-based access control
+from flask_security import roles_required ,login_required, current_user# For role-based access control
 from app.models import User, Property, Tenant, Payment, County, AuditLog
 # Assuming forms are defined in app/forms.py (using relative import)
 from forms import  PropertyForm, TenantForm, RecordPaymentForm

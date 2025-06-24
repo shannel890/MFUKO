@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
-from flask_login import current_user, login_required
-from flask_security import roles_accepted
+from flask_security import roles_accepted,current_user, login_required
 from flask_babel import gettext as _
 from app.models import User, Role
 from extension import user_datastore, db

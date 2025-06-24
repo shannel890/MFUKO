@@ -1,8 +1,8 @@
 from flask import Flask, request, render_template, g
-from flask_security import Security, SQLAlchemySessionUserDatastore, registerable
+from flask_security import Security, SQLAlchemySessionUserDatastore, current_user
 from flask_babel import _, lazy_gettext as _l
-from flask_login import current_user
 import os
+from forms import ExtendedRegisterForm
 import requests
 from datetime import datetime, timedelta
 import logging
@@ -26,7 +26,7 @@ from app.tasks import (
 
 # Import configuration and extensions
 from config import config_options
-from extension import db, login_manager, security, csrf, mail, babel, scheduler, limiter, migrate, user_datastore
+from extension import db, security, csrf, mail, babel, scheduler, limiter, migrate, user_datastore
 from forms import ExtendedRegisterForm
 
 def create_app(config_name='development'):
@@ -44,6 +44,8 @@ def create_app(config_name='development'):
     app.config['RATELIMIT_STORAGE_URL'] = 'memory://'  # Use in-memory storage for development
     app.config['RATELIMIT_DEFAULT'] = "200 per day"  # Default rate limit
     app.config['RATELIMIT_HEADERS_ENABLED'] = True
+    app.config['SECURITY_REGISTER_FORM'] = ExtendedRegisterForm  
+
 
     # Flask-Security configuration
     app.config['SECURITY_BLUEPRINT_NAME'] = 'fs_auth'  # Use a unique blueprint name
@@ -91,17 +93,8 @@ def create_app(config_name='development'):
     except OSError:
         pass  # Folder already exists
 
-    # Set up login manager configuration (for Flask-Login, used by Flask-Security)
-    login_manager.login_view = 'security.login'  # Flask-Security-Too's login endpoint
-    login_manager.login_message = _l('Please log in to access this page.')
-    login_manager.login_message_category = 'info'
-    login_manager.init_app(app)
+    
 
-    # User loader for Flask-Login (used by Flask-Security-Too)
-    @login_manager.user_loader
-    def load_user(user_id):
-        from app.models import User  # Import User model here to avoid circular imports
-        return User.query.get(int(user_id))
     
 
     # Set up Flask-Babel locale selector function

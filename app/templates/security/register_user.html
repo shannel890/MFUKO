@@ -1,0 +1,48 @@
+{% from "security/_macros.html" import render_field_with_errors, render_field, render_form_errors %}
+{% extends "base.html" %}
+
+{% block title %}Register - MFUKO{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fas fa-user-plus fa-2x mb-3"></i>
+            <h1>Create Account</h1>
+            <p>Join your digital MFUKO platform</p>
+        </div>
+
+        <div class="auth-body">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endwith %}
+
+            <form action="{{ url_for_security('register') }}" method="post" name="register_user_form">
+     
+                {{ register_user_form.hidden_tag() }}
+                
+
+                {{ render_field_with_errors(register_user_form.username) }}
+                {{ render_field_with_errors(register_user_form.first_name) }}
+                {{ render_field_with_errors(register_user_form.last_name) }}
+                {{ render_field_with_errors(register_user_form.email) }}
+                {{ render_field_with_errors(register_user_form.phone_number) }}
+                {{ render_field_with_errors(register_user_form.county_id) }}
+                {{ render_field_with_errors(register_user_form.password) }}
+
+                
+                {{ render_field(register_user_form.submit) }}
+            </form>
+
+            <div class="footer-links mt-3">
+                <a href="{{ url_for('fs_auth.login') }}">Already have an account? Sign In</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

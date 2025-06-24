@@ -1,6 +1,5 @@
 """Flask extensions module."""
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
 from flask_security import Security, SQLAlchemySessionUserDatastore
 from flask_wtf.csrf import CSRFProtect
 from flask_mail import Mail
@@ -13,7 +12,6 @@ import logging
 
 # Initialize Flask extensions
 db = SQLAlchemy()
-login_manager = LoginManager()
 csrf = CSRFProtect()
 mail = Mail()
 babel = Babel()
